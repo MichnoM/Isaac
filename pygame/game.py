@@ -42,14 +42,20 @@ class Player(object):
     def draw(self, window):
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
         # HITBOX VISUALISATION
-        pygame.draw.rect(window, (255, 0, 0), self.hitbox, 2)
+        #pygame.draw.rect(window, (255, 0, 0), self.hitbox, 2)
         # ---------------------------------------------------
-        sprite = sprite_sheet.get_image(self.frame)
-        window.blit(sprite, (self.x, self.y))
+        if not custom_sprite:
+            sprite = sprite_sheet.get_image(self.frame)
+            window.blit(sprite, (self.x, self.y))
+        else:
+            self.frame = 4
+            sprite = sprite_sheet.get_image(self.frame)
+            window.blit(sprite, (self.x, self.y))
 
     def hit(self):
         if self.health > 0:
             self.health -= 1
+            self.frame = 4
             if self.health <= 0:
                 self.dead = True
                 self.frame = 5
@@ -86,10 +92,10 @@ class Enemy(object):
         self.move()
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
         pygame.draw.rect(window, (0, 255, 0), (self.x, self.y, self.width, self.height))
-        pygame.draw.rect(window, (255, 0, 0), self.hitbox, 2)
+        #pygame.draw.rect(window, (255, 0, 0), self.hitbox, 2)
 
     def move(self):
-        if self.x + self.width > 770 or self.x < 30:
+        if self.x + self.width > map.right_wall.x or self.x < map.left_wall.x + map.left_wall.width:
             self.direction *= -1
             self.vel_x = random.randint(0, 4) * self.direction
             self.vel_y = random.randint(0, 4) * self.direction
@@ -97,7 +103,7 @@ class Enemy(object):
                 self.vel_x = random.randint(2, 4) * self.direction
                 self.vel_y = random.randint(2, 4) * self.direction
 
-        if self.y + self.height > 550 or self.y < 50:
+        if self.y + self.height > map.bottom_wall.y or self.y < map.upper_wall.y + map.upper_wall.height:
             self.direction *= -1
             self.vel_x = random.randint(0, 4) * self.direction
             self.vel_y = random.randint(0, 4) * self.direction
@@ -113,7 +119,25 @@ class Enemy(object):
             self.health -= 1 * isaac.damage
             if self.health <= 0:
                 enemies.pop(enemies.index(enemy))
-        print('enemy hit!')
+
+class Map(object):
+    def __init__(self, width, height, thickness = 50):
+        self.width = width
+        self.height = height
+        self.thickness = thickness
+        self.left_wall = pygame.Rect(0, 0, thickness//2, height)
+        self.right_wall = pygame.Rect(window_width - thickness//2, 0, thickness//2, height)
+        self.upper_wall = pygame.Rect(0, 0, width, thickness//2)
+        self.bottom_wall = pygame.Rect(0, window_height - thickness, width, thickness)
+        self.walls = [self.left_wall, self.right_wall, self.upper_wall, self.bottom_wall]
+
+    def draw(self, window):
+        for wall in self.walls:
+            pygame.draw.rect(window, (255, 0, 0), wall, 2)
+
+class Level(Map):
+    pass
+
 
 def redrawGameWindow():
     window.blit(background, (0, 0))
@@ -123,6 +147,7 @@ def redrawGameWindow():
     for enemy in enemies:
         enemy.draw(window)
     window.blit(healthbar, (-360 + 45 * isaac.health, 10))
+    #map.draw(window)
 
     pygame.display.update()
 
@@ -131,7 +156,7 @@ def enemiesSpawn():
     for i in range(0, number_of_enemies):
         spawn_x = random.randint(100, 700)
         spawn_y = random.randint(100, 500)
-        if spawn_x == isaac.hitbox.x or spawn_y == isaac.hitbox.y:
+        if spawn_x == isaac.x or spawn_y == isaac.y:
             spawn_x = random.randint(100, 700)
             spawn_y = random.randint(100, 700)
             enemies.append(Enemy(spawn_x, spawn_y, 50, 50))
@@ -146,12 +171,15 @@ def checkCollision(object1, object2):
 
 cooldown_reset_event = pygame.USEREVENT + 1
 damage_cooldown_reset_event = pygame.USEREVENT + 2
+custom_sprite_event = pygame.USEREVENT + 3
 
 on_cooldown = False
 damage_cooldown = False
+custom_sprite = False
 
 # MAIN LOOP
 # |-----------------------------------------------------------------------------------|
+map = Map(window_width, window_height)
 isaac = Player(372, 267, 56, 66)
 tears = []
 enemies = []
@@ -162,8 +190,7 @@ while run:
     clock.tick(60)
 
     isaac.stationary = True
-    isaac.collision = False
-
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -173,6 +200,9 @@ while run:
         if event.type == damage_cooldown_reset_event:
             damage_cooldown = False
             pygame.time.set_timer(damage_cooldown_reset_event, 0)
+        if event.type == custom_sprite_event:
+            custom_sprite = False
+            pygame.time.set_timer(custom_sprite_event, 0)
 
     for tear in tears:
         if tear.x < window_width and tear.x > 0 and tear.y < window_height and tear.y > 0:
@@ -198,23 +228,31 @@ while run:
                 isaac.hit()
                 damage_cooldown = True
                 pygame.time.set_timer(damage_cooldown_reset_event, 1000)
+                if not isaac.dead:
+                    custom_sprite = True
+                    pygame.time.set_timer(custom_sprite_event, 1000)
 
     keys = pygame.key.get_pressed()
 
     if isaac.dead == False:
-        if keys[pygame.K_a] and isaac.x > isaac.vel and isaac.collision == False:
-            isaac.x -= isaac.vel
+        if keys[pygame.K_a]:
+            if not checkCollision(isaac, map.left_wall):
+                isaac.x -= isaac.vel
             isaac.stationary = False
             isaac.frame = 2
-        if keys[pygame.K_d] and isaac.x < window_width - isaac.width - isaac.vel and isaac.collision == False:
-            isaac.x += isaac.vel
+        if keys[pygame.K_d]:
+            if not checkCollision(isaac, map.right_wall):
+                isaac.x += isaac.vel
             isaac.stationary = False
             isaac.frame = 3
-        if keys[pygame.K_s] and isaac.y < window_height - isaac.height - 50 and isaac.collision == False:
-            isaac.y += isaac.vel
+        if keys[pygame.K_s]:
+            if not checkCollision(isaac, map.bottom_wall):
+                isaac.y += isaac.vel
+            isaac.stationary = False
             isaac.frame = 0
-        if keys[pygame.K_w] and isaac.y > isaac.vel and isaac.collision == False:
-            isaac.y -= isaac.vel
+        if keys[pygame.K_w]:
+            if not checkCollision(isaac, map.upper_wall):
+                isaac.y -= isaac.vel
             isaac.stationary = False
             isaac.frame = 1
         if isaac.stationary:
