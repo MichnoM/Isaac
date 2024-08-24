@@ -4,8 +4,8 @@ import random
 
 pygame.init()
 
-window_width = 800
-window_height = 600
+window_width = 1280
+window_height = 800
 window = pygame.display.set_mode((window_width, window_height))
 
 pygame.display.set_caption("Game")
@@ -37,7 +37,7 @@ class Player(object):
         self.health = 5
         self.vel = 5
         self.attack_speed = 5
-        self.damage = 1
+        self.damage = 10
 
     def draw(self, window):
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
@@ -84,9 +84,12 @@ class Enemy(object):
         self.height = height
         self.vel_x = 3
         self.vel_y = 3
-        self.direction = 1
+        self.direction_x = 1
+        self.direction_y = 1
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
         self.health = 10
+        self.cooldown_tracker = 0
+        self.direction = random.randint(1, 4)
 
     def draw(self, window):
         self.move()
@@ -95,24 +98,34 @@ class Enemy(object):
         #pygame.draw.rect(window, (255, 0, 0), self.hitbox, 2)
 
     def move(self):
-        if self.x + self.width > map.right_wall.x or self.x < map.left_wall.x + map.left_wall.width:
-            self.direction *= -1
-            self.vel_x = random.randint(0, 4) * self.direction
-            self.vel_y = random.randint(0, 4) * self.direction
-            if self.vel_x == 0 and self.vel_y == 0:
-                self.vel_x = random.randint(2, 4) * self.direction
-                self.vel_y = random.randint(2, 4) * self.direction
+        if self.cooldown_tracker >= 1:
+            self.cooldown_tracker += 1
+        if self.cooldown_tracker == 10:
+            self.cooldown_tracker = 0
+        if self.x + self.width >= map.right_wall.x or self.x <= map.left_wall.x + map.left_wall.width:
+            if self.cooldown_tracker == 0:
+                self.direction_x *= -1
+                self.vel_x = random.randint(1, 4) * self.direction_x
+                self.cooldown_tracker = 1
 
-        if self.y + self.height > map.bottom_wall.y or self.y < map.upper_wall.y + map.upper_wall.height:
-            self.direction *= -1
-            self.vel_x = random.randint(0, 4) * self.direction
-            self.vel_y = random.randint(0, 4) * self.direction
-            if self.vel_x == 0 and self.vel_y == 0:
-                self.vel_x = random.randint(2, 4) * self.direction
-                self.vel_y = random.randint(2, 4) * self.direction
+        if self.y + self.height >= map.bottom_wall.y or self.y <= map.upper_wall.y + map.upper_wall.height:
+            if self.cooldown_tracker == 0:
+                self.direction_y *= -1
+                self.vel_y = random.randint(1, 4) * self.direction_y
+                self.cooldown_tracker = 1
 
-        self.x += self.vel_x
-        self.y += self.vel_y
+        if self.direction == 1:
+            self.x += 1 * self.vel_x
+            self.y += 1 * self.vel_y
+        elif self.direction == 2:
+            self.x -= 1 * self.vel_x
+            self.y -= 1 * self.vel_y
+        elif self.direction == 3:
+            self.x += 1 * self.vel_x
+            self.y -= 1 * self.vel_y
+        else:
+            self.x -= 1 * self.vel_x
+            self.y += 1 * self.vel_y
 
     def hit(self):
         if self.health > 0:
@@ -121,52 +134,132 @@ class Enemy(object):
                 enemies.pop(enemies.index(enemy))
 
 class Map(object):
-    def __init__(self, width, height, thickness = 50):
+    def __init__(self, width, height, thickness = 40):
         self.width = width
         self.height = height
         self.thickness = thickness
-        self.left_wall = pygame.Rect(0, 0, thickness//2, height)
-        self.right_wall = pygame.Rect(window_width - thickness//2, 0, thickness//2, height)
-        self.upper_wall = pygame.Rect(0, 0, width, thickness//2)
-        self.bottom_wall = pygame.Rect(0, window_height - thickness, width, thickness)
+        self.left_wall = pygame.Rect(0, 0, thickness, height)
+        self.right_wall = pygame.Rect(window_width - thickness, 0, thickness, height)
+        self.upper_wall = pygame.Rect(0, 0, width, thickness)
+        self.bottom_wall = pygame.Rect(0, window_height - thickness-20, width, thickness+20)
         self.walls = [self.left_wall, self.right_wall, self.upper_wall, self.bottom_wall]
 
     def draw(self, window):
         for wall in self.walls:
             pygame.draw.rect(window, (255, 0, 0), wall, 2)
 
-class Level(Map):
-    pass
+class Level(object):
+    def __init__(self, number_of_enemies, number_of_doors, level_number, previous_door):
+        self.number_of_enemies = number_of_enemies
+        self.number_of_doors = number_of_doors
+        self.level_number = level_number
+        self.doors = []
+        self.previous_door = previous_door
+        self.createDoors()
+        self.enemiesSpawn()
 
+    def draw(self, window):
+        for door in self.doors:
+            door.draw(window)
+        for enemy in enemies:
+            enemy.draw(window)
+
+    def doorsPlacement(self, door_placement):
+        if door_placement == 1 or door_placement == 3:
+            width = 50
+            height = 65
+            if door_placement == 1:
+                x = window_width//2 - width//2
+                y = 0
+                self.doors.append(Doors(x, y, width, height, 1))
+            else:
+                x = window_width//2 - width//2
+                y = window_height - height
+                self.doors.append(Doors(x, y, width, height, 3))
+        elif door_placement == 2 or door_placement == 4:
+            width = 50
+            height = 50
+            if door_placement == 2:
+                x = window_width - width
+                y = window_height//2 - height//2
+                self.doors.append(Doors(x, y, width, height, 2))
+            else:
+                x = 0
+                y = window_height//2 - height//2
+                self.doors.append(Doors(x, y, width, height, 4))
+
+    def createDoors(self):
+        door_placement_check = []
+        door_placement = 0
+        for i in range(0, self.number_of_doors):
+            if i == 0:
+                if self.previous_door == 1:
+                    door_placement = 3
+                elif self.previous_door == 3:
+                    door_placement = 1
+                elif self.previous_door == 2:
+                    door_placement = 4
+                elif self.previous_door == 4:
+                    door_placement = 2
+                else:
+                    door_placement = random.randint(1, 4)
+            else:
+                door_placement = random.randint(1, 4)
+
+            if door_placement not in door_placement_check:
+                door_placement_check.append(door_placement)
+            else:
+                for i in range(0, 100):
+                    door_placement = random.randint(1, 4)
+                    if door_placement not in door_placement_check:
+                        door_placement_check.append(door_placement)
+                        break
+            self.doorsPlacement(door_placement)
+            
+    def enemiesSpawn(self):
+        # self.number_of_enemies = random.randint(1, 3)
+        for i in range(0, self.number_of_enemies):
+            spawn_x = random.randint(map.left_wall.width + 100, map.right_wall.x - 100)
+            spawn_y = random.randint(map.upper_wall.height + 100, map.bottom_wall.y - 100)
+            if spawn_x == isaac.x or spawn_y == isaac.y:
+                for j in range(0, 100):
+                    spawn_x = random.randint(map.left_wall.width, map.right_wall.x)
+                    spawn_y = random.randint(map.upper_wall.height, map.bottom_wall.y)
+            else:
+                enemies.append(Enemy(spawn_x, spawn_y, 50, 50))
+
+class Doors(object):
+    def __init__(self, x, y, width, height, localisation):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.localisation = localisation
+
+    def draw(self, window):
+        pygame.draw.rect(window, (0, 0, 0), (self.x, self.y, self.width, self.height))
 
 def redrawGameWindow():
     window.blit(background, (0, 0))
+    levels[level_number].draw(window)
     isaac.draw(window)
     for tear in tears:
         tear.draw(window)
-    for enemy in enemies:
-        enemy.draw(window)
     window.blit(healthbar, (-360 + 45 * isaac.health, 10))
-    #map.draw(window)
 
     pygame.display.update()
 
-def enemiesSpawn():
-    number_of_enemies = random.randint(1, 3)
-    for i in range(0, number_of_enemies):
-        spawn_x = random.randint(100, 700)
-        spawn_y = random.randint(100, 500)
-        if spawn_x == isaac.x or spawn_y == isaac.y:
-            spawn_x = random.randint(100, 700)
-            spawn_y = random.randint(100, 700)
-            enemies.append(Enemy(spawn_x, spawn_y, 50, 50))
-        else:
-            enemies.append(Enemy(spawn_x, spawn_y, 50, 50))
-
 def checkCollision(object1, object2):
-    if object1.x + object1.width > object2.x and object1.x < object2.x + object2.width:
-        if object1.y + object1.height > object2.y and object1.y < object2.y + object2.height:
-            return True
+    if type(object2) == list:
+        for i in object2:
+            if object1.x + object1.width > i.x and object1.x < i.x + i.width:
+                if object1.y + object1.height > i.y and object1.y < i.y + i.height:
+                    return True
+
+    else: 
+        if object1.x + object1.width > object2.x and object1.x < object2.x + object2.width:
+            if object1.y + object1.height > object2.y and object1.y < object2.y + object2.height:
+                return True
     return False
 
 cooldown_reset_event = pygame.USEREVENT + 1
@@ -181,9 +274,13 @@ custom_sprite = False
 # |-----------------------------------------------------------------------------------|
 map = Map(window_width, window_height)
 isaac = Player(372, 267, 56, 66)
+levels = []
 tears = []
 enemies = []
-enemiesSpawn()
+level0 = Level(0, 4, 0, 0)
+level_number = 0
+levels.append(level0)
+previous_door = 0
 
 run = True
 while run:
@@ -232,26 +329,53 @@ while run:
                     custom_sprite = True
                     pygame.time.set_timer(custom_sprite_event, 1000)
 
-    keys = pygame.key.get_pressed()
+    for level in levels:
+        for door in level.doors:
+            if door.localisation == 1 and isaac.y <= door.y:
+                level_number += 1
+                levels.append(Level(random.randint(1, 6), random.randint(1, 4), level_number, door.localisation))
+                isaac.x = window_width//2 - isaac.width//2
+                isaac.y = window_height - 100
+                previous_door = 3
+            elif door.localisation == 2 and isaac.x >= door.x + door.width:
+                level_number += 1
+                levels.append(Level(random.randint(1, 6), random.randint(1, 4), level_number, door.localisation))
+                isaac.x = 100
+                isaac.y = window_height//2 - isaac.height//2
+                previous_door = 4
+            elif door.localisation == 3 and isaac.y + isaac.height >= door.y + door.height:
+                level_number += 1
+                levels.append(Level(random.randint(1, 6), random.randint(1, 4), level_number, door.localisation))
+                isaac.x = window_width//2 - isaac.width//2
+                isaac.y = 100
+                previous_door = 1
+            elif door.localisation == 4 and isaac.x <= door.x:
+                level_number += 1
+                levels.append(Level(random.randint(1, 6), random.randint(1, 4), level_number, door.localisation))
+                isaac.x = window_width - 100
+                isaac.y = window_height//2 - isaac.height//2
+                previous_door = 2
 
+    keys = pygame.key.get_pressed()
+    print(level_number)
     if isaac.dead == False:
         if keys[pygame.K_a]:
-            if not checkCollision(isaac, map.left_wall):
+            if not checkCollision(isaac, map.left_wall) or checkCollision(isaac, level.doors) and not enemies:
                 isaac.x -= isaac.vel
             isaac.stationary = False
             isaac.frame = 2
         if keys[pygame.K_d]:
-            if not checkCollision(isaac, map.right_wall):
+            if not checkCollision(isaac, map.right_wall) or checkCollision(isaac, level.doors) and not enemies:
                 isaac.x += isaac.vel
             isaac.stationary = False
             isaac.frame = 3
         if keys[pygame.K_s]:
-            if not checkCollision(isaac, map.bottom_wall):
+            if not checkCollision(isaac, map.bottom_wall) or checkCollision(isaac, level.doors) and not enemies:
                 isaac.y += isaac.vel
             isaac.stationary = False
             isaac.frame = 0
         if keys[pygame.K_w]:
-            if not checkCollision(isaac, map.upper_wall):
+            if not checkCollision(isaac, map.upper_wall) or checkCollision(isaac, level.doors) and not enemies:
                 isaac.y -= isaac.vel
             isaac.stationary = False
             isaac.frame = 1
@@ -285,6 +409,9 @@ while run:
                 tears.append(Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "right"))
                 on_cooldown = True
                 pygame.time.set_timer(cooldown_reset_event, 1000//isaac.attack_speed)
+
+        if keys[pygame.K_SPACE]:
+            enemies=[]
 
     redrawGameWindow()
 
