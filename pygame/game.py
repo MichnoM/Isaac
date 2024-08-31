@@ -35,7 +35,7 @@ class Player(object):
         self.dead = False
 
         self.health = 5
-        self.vel = 5
+        self.vel = 10
         self.attack_speed = 5
         self.damage = 10
 
@@ -134,99 +134,119 @@ class Enemy(object):
                 enemies.pop(enemies.index(enemy))
 
 class Map(object):
-    def __init__(self, width, height, thickness = 40):
+    def __init__(self, width, height, wall_thickness = 40):
         self.width = width
         self.height = height
-        self.thickness = thickness
-        self.left_wall = pygame.Rect(0, 0, thickness, height)
-        self.right_wall = pygame.Rect(window_width - thickness, 0, thickness, height)
-        self.upper_wall = pygame.Rect(0, 0, width, thickness)
-        self.bottom_wall = pygame.Rect(0, window_height - thickness-20, width, thickness+20)
+        self.wall_thickness = wall_thickness
+        self.left_wall = pygame.Rect(0, 0, wall_thickness, height)
+        self.right_wall = pygame.Rect(window_width - wall_thickness, 0, wall_thickness, height)
+        self.upper_wall = pygame.Rect(0, 0, width, wall_thickness)
+        self.bottom_wall = pygame.Rect(0, window_height - wall_thickness-20, width, wall_thickness+20)
         self.walls = [self.left_wall, self.right_wall, self.upper_wall, self.bottom_wall]
+        self.layout = []
+        self.rooms = []
+        self.number_of_rooms = 10
+        self.mapLayout()
+        self.roomCreation()
 
     def draw(self, window):
         for wall in self.walls:
             pygame.draw.rect(window, (255, 0, 0), wall, 2)
 
-class Level(object):
-    def __init__(self, number_of_enemies, number_of_doors, level_number, previous_door):
+    def mapLayout(self):
+        for row in range(11):
+            self.layout.append([])
+            for column in range(11):
+                self.layout[row].append(0)
+        for i in range(self.number_of_rooms):
+            if i == 0:
+                self.layout[5][5] = 1
+            else:
+                for j in range(100):
+                    row = random.randint(1, 8)
+                    column = random.randint(1, 8)
+                    if self.layout[row][column] == 0:
+                        if self.layout[row-1][column] == 1 or self.layout[row+1][column] == 1 or self.layout[row][column-1] == 1 or self.layout[row][column+1] == 1:
+                            self.layout[row][column] = 1
+                            break
+        for j in range(2):
+            for n in range(100):
+                    row = random.randint(1, 8)
+                    column = random.randint(1, 8)
+                    if self.layout[row][column] == 0:
+                        if self.layout[row-1][column] == 1 or self.layout[row+1][column] == 1 or self.layout[row][column-1] == 1 or self.layout[row][column+1] == 1:
+                            if j == 0:
+                                self.layout[row][column] = 2
+                                break
+                            else:
+                                self.layout[row][column] = 3
+                                break
+
+    def roomCreation(self):
+        room_x = 0
+        room_y = 0
+        door_layout = []
+        for row_id, row in enumerate(self.layout):
+            for column_id, column in enumerate(row):
+                if column == 1:
+                    if self.layout[row_id][column_id - 1] == 1:
+                        door_layout.append(4)
+                    if self.layout[row_id][column_id + 1] == 1:
+                        door_layout.append(2)
+                    if self.layout[row_id - 1][column_id] == 1:
+                        door_layout.append(1)
+                    if self.layout[row_id + 1][column_id] == 1:
+                        door_layout.append(3)
+
+                    room_x = row_id
+                    room_y = column_id
+                    print(room_x, room_y, door_layout)
+                    self.rooms.append(Room(random.randint(1, 6), room_x, room_y, door_layout, column))
+                    door_layout = []
+
+class Room(object):
+    def __init__(self, number_of_enemies, room_x, room_y, door_placement, room_type):
         self.number_of_enemies = number_of_enemies
-        self.number_of_doors = number_of_doors
-        self.level_number = level_number
+        self.room_x = room_x
+        self.room_y = room_y
+        self.room_index = [room_x, room_y]
+        self.door_placement = door_placement
+        self.room_type = room_type
+        self.visited = False
         self.doors = []
-        self.previous_door = previous_door
-        self.createDoors()
-        self.enemiesSpawn()
+        self.doorsPlacement(door_placement)
+
+    def __str__(self):
+        return f"no of enemies: {self.number_of_enemies}, x: {self.room_x}, y: {self.room_y}, door placement: {self.door_placement}, type: {self.room_type}"
 
     def draw(self, window):
         for door in self.doors:
             door.draw(window)
-        for enemy in enemies:
-            enemy.draw(window)
 
     def doorsPlacement(self, door_placement):
-        if door_placement == 1 or door_placement == 3:
-            width = 50
-            height = 65
-            if door_placement == 1:
-                x = window_width//2 - width//2
-                y = 0
-                self.doors.append(Doors(x, y, width, height, 1))
-            else:
-                x = window_width//2 - width//2
-                y = window_height - height
-                self.doors.append(Doors(x, y, width, height, 3))
-        elif door_placement == 2 or door_placement == 4:
-            width = 50
-            height = 50
-            if door_placement == 2:
-                x = window_width - width
-                y = window_height//2 - height//2
-                self.doors.append(Doors(x, y, width, height, 2))
-            else:
-                x = 0
-                y = window_height//2 - height//2
-                self.doors.append(Doors(x, y, width, height, 4))
-
-    def createDoors(self):
-        door_placement_check = []
-        door_placement = 0
-        for i in range(0, self.number_of_doors):
-            if i == 0:
-                if self.previous_door == 1:
-                    door_placement = 3
-                elif self.previous_door == 3:
-                    door_placement = 1
-                elif self.previous_door == 2:
-                    door_placement = 4
-                elif self.previous_door == 4:
-                    door_placement = 2
+        for i in door_placement:
+            if i == 1 or i == 3:
+                width = 50
+                height = 65
+                if i == 1:
+                    x = window_width//2 - width//2
+                    y = 0
+                    self.doors.append(Doors(x, y, width, height, 1))
                 else:
-                    door_placement = random.randint(1, 4)
-            else:
-                door_placement = random.randint(1, 4)
-
-            if door_placement not in door_placement_check:
-                door_placement_check.append(door_placement)
-            else:
-                for i in range(0, 100):
-                    door_placement = random.randint(1, 4)
-                    if door_placement not in door_placement_check:
-                        door_placement_check.append(door_placement)
-                        break
-            self.doorsPlacement(door_placement)
-            
-    def enemiesSpawn(self):
-        # self.number_of_enemies = random.randint(1, 3)
-        for i in range(0, self.number_of_enemies):
-            spawn_x = random.randint(map.left_wall.width + 100, map.right_wall.x - 100)
-            spawn_y = random.randint(map.upper_wall.height + 100, map.bottom_wall.y - 100)
-            if spawn_x == isaac.x or spawn_y == isaac.y:
-                for j in range(0, 100):
-                    spawn_x = random.randint(map.left_wall.width, map.right_wall.x)
-                    spawn_y = random.randint(map.upper_wall.height, map.bottom_wall.y)
-            else:
-                enemies.append(Enemy(spawn_x, spawn_y, 50, 50))
+                    x = window_width//2 - width//2
+                    y = window_height - height
+                    self.doors.append(Doors(x, y, width, height, 3))
+            elif i == 2 or i == 4:
+                width = 50
+                height = 50
+                if i == 2:
+                    x = window_width - width
+                    y = window_height//2 - height//2
+                    self.doors.append(Doors(x, y, width, height, 2))
+                else:
+                    x = 0
+                    y = window_height//2 - height//2
+                    self.doors.append(Doors(x, y, width, height, 4))
 
 class Doors(object):
     def __init__(self, x, y, width, height, localisation):
@@ -236,12 +256,19 @@ class Doors(object):
         self.height = height
         self.localisation = localisation
 
+    def __str__(self):
+        return f"x: {self.x}, y: {self.y}, width: {self.width}, height: {self.height}, localisation: {self.localisation}"
+
     def draw(self, window):
         pygame.draw.rect(window, (0, 0, 0), (self.x, self.y, self.width, self.height))
 
 def redrawGameWindow():
     window.blit(background, (0, 0))
-    levels[level_number].draw(window)
+    for room in rooms:
+        if room.room_index == current_room:
+            room.draw(window)
+    for enemy in enemies:
+        enemy.draw(window)
     isaac.draw(window)
     for tear in tears:
         tear.draw(window)
@@ -250,17 +277,27 @@ def redrawGameWindow():
     pygame.display.update()
 
 def checkCollision(object1, object2):
-    if type(object2) == list:
-        for i in object2:
-            if object1.x + object1.width > i.x and object1.x < i.x + i.width:
-                if object1.y + object1.height > i.y and object1.y < i.y + i.height:
+        if type(object2) == list:
+            for i in object2:
+                if object1.x + object1.width > i.x and object1.x < i.x + i.width:
+                    if object1.y + object1.height > i.y and object1.y < i.y + i.height:
+                        return True
+        else: 
+            if object1.x + object1.width > object2.x and object1.x < object2.x + object2.width:
+                if object1.y + object1.height > object2.y and object1.y < object2.y + object2.height:
                     return True
+        return False
 
-    else: 
-        if object1.x + object1.width > object2.x and object1.x < object2.x + object2.width:
-            if object1.y + object1.height > object2.y and object1.y < object2.y + object2.height:
-                return True
-    return False
+def enemiesSpawn(number_of_enemies):
+    for i in range(0, number_of_enemies):
+        spawn_x = random.randint(map.left_wall.width + 100, map.right_wall.x - 100)
+        spawn_y = random.randint(map.upper_wall.height + 100, map.bottom_wall.y - 100)
+        if spawn_x == isaac.x or spawn_y == isaac.y:
+            for j in range(100):
+                spawn_x = random.randint(map.left_wall.width, map.right_wall.x)
+                spawn_y = random.randint(map.upper_wall.height, map.bottom_wall.y)
+        else:
+            enemies.append(Enemy(spawn_x, spawn_y, 50, 50))
 
 cooldown_reset_event = pygame.USEREVENT + 1
 damage_cooldown_reset_event = pygame.USEREVENT + 2
@@ -274,19 +311,23 @@ custom_sprite = False
 # |-----------------------------------------------------------------------------------|
 map = Map(window_width, window_height)
 isaac = Player(372, 267, 56, 66)
-levels = []
+rooms = map.rooms
 tears = []
 enemies = []
-level0 = Level(0, 4, 0, 0)
-level_number = 0
-levels.append(level0)
-previous_door = 0
+current_room = [5, 5]
+for x in range(len(map.layout)):
+    print(map.layout[x])
+for object in map.rooms:
+    print(object)
+    for door in object.doors:
+        print(door)
 
 run = True
 while run:
     clock.tick(60)
 
     isaac.stationary = True
+    # print(current_room)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -329,53 +370,55 @@ while run:
                     custom_sprite = True
                     pygame.time.set_timer(custom_sprite_event, 1000)
 
-    for level in levels:
-        for door in level.doors:
-            if door.localisation == 1 and isaac.y <= door.y:
-                level_number += 1
-                levels.append(Level(random.randint(1, 6), random.randint(1, 4), level_number, door.localisation))
+
+    for room in rooms:
+        if room.room_index == [5, 5]:
+            room.visited = True
+        if room.room_index == current_room:
+            if not room.visited:
+                enemiesSpawn(room.number_of_enemies)
+                room.visited = True
+            if checkCollision(isaac, room.doors):
+                door_collision = True
+            else:
+                door_collision = False
+            if isaac.y <= 0:
                 isaac.x = window_width//2 - isaac.width//2
                 isaac.y = window_height - 100
-                previous_door = 3
-            elif door.localisation == 2 and isaac.x >= door.x + door.width:
-                level_number += 1
-                levels.append(Level(random.randint(1, 6), random.randint(1, 4), level_number, door.localisation))
+                current_room[0] -= 1
+            if isaac.x >= window_width:
                 isaac.x = 100
                 isaac.y = window_height//2 - isaac.height//2
-                previous_door = 4
-            elif door.localisation == 3 and isaac.y + isaac.height >= door.y + door.height:
-                level_number += 1
-                levels.append(Level(random.randint(1, 6), random.randint(1, 4), level_number, door.localisation))
+                current_room[1] += 1
+            if isaac.y >= window_height:
                 isaac.x = window_width//2 - isaac.width//2
                 isaac.y = 100
-                previous_door = 1
-            elif door.localisation == 4 and isaac.x <= door.x:
-                level_number += 1
-                levels.append(Level(random.randint(1, 6), random.randint(1, 4), level_number, door.localisation))
+                current_room[0] += 1
+            if isaac.x <= 0:
                 isaac.x = window_width - 100
                 isaac.y = window_height//2 - isaac.height//2
-                previous_door = 2
+                current_room[1] -= 1
+                
 
     keys = pygame.key.get_pressed()
-    print(level_number)
     if isaac.dead == False:
         if keys[pygame.K_a]:
-            if not checkCollision(isaac, map.left_wall) or checkCollision(isaac, level.doors) and not enemies:
+            if not checkCollision(isaac, map.left_wall) or door_collision and not enemies:
                 isaac.x -= isaac.vel
             isaac.stationary = False
             isaac.frame = 2
         if keys[pygame.K_d]:
-            if not checkCollision(isaac, map.right_wall) or checkCollision(isaac, level.doors) and not enemies:
+            if not checkCollision(isaac, map.right_wall) or door_collision and not enemies:
                 isaac.x += isaac.vel
             isaac.stationary = False
             isaac.frame = 3
         if keys[pygame.K_s]:
-            if not checkCollision(isaac, map.bottom_wall) or checkCollision(isaac, level.doors) and not enemies:
+            if not checkCollision(isaac, map.bottom_wall) or door_collision and not enemies:
                 isaac.y += isaac.vel
             isaac.stationary = False
             isaac.frame = 0
         if keys[pygame.K_w]:
-            if not checkCollision(isaac, map.upper_wall) or checkCollision(isaac, level.doors) and not enemies:
+            if not checkCollision(isaac, map.upper_wall) or door_collision and not enemies:
                 isaac.y -= isaac.vel
             isaac.stationary = False
             isaac.frame = 1
@@ -411,8 +454,12 @@ while run:
                 pygame.time.set_timer(cooldown_reset_event, 1000//isaac.attack_speed)
 
         if keys[pygame.K_SPACE]:
-            enemies=[]
-
+            enemies = []
+        if keys[pygame.K_z]:
+            print(current_room)
+            for room in rooms:
+                if room.room_x == current_room[0] and room.room_y == current_room[1]:
+                    print(room)
     redrawGameWindow()
 
 pygame.quit()
