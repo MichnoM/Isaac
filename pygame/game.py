@@ -2,12 +2,13 @@ import pygame
 import random
 import src
 from src.items import item_list
-from settings import window_width, window_height
+from settings import window_width, window_height, debug_mode
 import src.projectile
 
 pygame.init()
 
 window = pygame.display.set_mode((window_width, window_height))
+font = pygame.font.SysFont("None", 30)
 
 pygame.display.set_caption("Game")
 
@@ -15,15 +16,15 @@ clock = pygame.time.Clock()
                 
 def redrawGameWindow():
     map.draw(window)
-    for room in rooms:
-        if room.room_index == current_room:
+    for room in map.rooms:
+        if room.room_index == map.current_room:
             room.draw(window)
             for item in room.items:
                 item.draw(window)
             for door in room.doors:
                 door.draw(window)
-    for enemy in enemies:
-        enemy.draw(window)
+        for enemy in room.enemies:
+            enemy.draw(window)
     isaac.draw(window)
     for tear in tears:
         tear.draw(window)
@@ -31,84 +32,37 @@ def redrawGameWindow():
     if debug_mode:
         pygame.draw.line(window, (0, 0, 255), (window_width//2, window_height), (window_width//2, 0))
         pygame.draw.line(window, (0, 0, 255), (0, window_height//2), (window_width, window_height//2))
+        for wall in map.walls:
+            pygame.draw.rect(window, (255, 0, 0), wall, 2)
     if pause:
-        pygame.draw.rect(window, "black", (window_width//4, window_height//4, window_width//2, window_height//2))
+        label = font.render(f"Damage: {isaac.damage}, Attack Speed: {isaac.attack_speed}, Speed: {isaac.speed}", 1, (255, 255, 255))
+        menu = pygame.Surface((window_width//2, window_height//2))
+        menu.blit(label, (menu.get_width()//10, menu.get_width()//10))
+        window.blit(menu, (window_width//4, window_height//4, window_width//2, window_height//2))
 
     pygame.display.update()
 
-def checkCollision(object1, object2, mode = 1):
-        # mode == 1 - checks for collision
-        # mode == 2 - checks if one object is within another object
-        if type(object2) == list:
-            for i in object2:
-                if mode == 1:
-                    if object1.x + object1.width > i.x and object1.x < i.x + i.width:
-                        if object1.y + object1.height > i.y and object1.y < i.y + i.height:
-                            return True
-                else:
-                    if object1.x + object1.width <= i.x + i.width and object1.x >= i.x:
-                        if object1.y + object1.height <= i.y + i.height and object1.y >= i.y:
-                            return True
-        else: 
-            if mode == 1:
-                if object1.x + object1.width > object2.x and object1.x < object2.x + object2.width:
-                    if object1.y + object1.height > object2.y and object1.y < object2.y + object2.height:
-                        return True
-            else:
-                if object1.x + object1.width <= object2.x + object2.width and object1.x >= object2.x:
-                        if object1.y + object1.height <= object2.y + object2.height and object1.y >= object2.y:
-                            return True
-        return False
-
-def enemiesSpawn(number_of_enemies):
-    for i in range(0, number_of_enemies):
-        spawn_x = random.randint(map.left_wall.width + 100, map.right_wall.x - 100)
-        spawn_y = random.randint(map.upper_wall.height + 100, map.bottom_wall.y - 100)
-        if spawn_x == isaac.x or spawn_y == isaac.y:
-            for j in range(100):
-                spawn_x = random.randint(map.left_wall.width, map.right_wall.x)
-                spawn_y = random.randint(map.upper_wall.height, map.bottom_wall.y)
-        else:
-            enemies.append(src.enemy.Enemy(spawn_x, spawn_y, 50, 50, map.walls))
-
-def itemsSpawn():
-    for room in rooms:
-        for i in range(room.amount_of_items):
-            random_int = random.randint(0, len(item_list) - 1)
-            random_item = item_list[random_int]
-            room.items.append(src.item.Item(random_item[0], random_item[1]))
-
-        for item_id, item in enumerate(room.items):
-            if not item.hide:
-                if room.amount_of_items != 1:
-                    if room.amount_of_items % 2 == 0:
-                        item.x = ((window_width//2 + item.width*1.5) - (room.amount_of_items * (item.width*2))) + 200*item_id
-                    else:
-                        item.x = ((window_width//2 + item.width*1.5) - (room.amount_of_items * (item.width*2))) + 200*item_id
-
-cooldown_reset_event = pygame.USEREVENT + 1
-damage_cooldown_reset_event = pygame.USEREVENT + 2
-custom_sprite_event = pygame.USEREVENT + 3
+cooldown_event = pygame.USEREVENT + 1
+damage_cooldown_event = pygame.USEREVENT + 2
+head_animation_event = pygame.USEREVENT + 3
+body_animation_cooldown_event = pygame.USEREVENT + 4
+hurt_animation_event = pygame.USEREVENT + 5
 
 on_cooldown = False
 damage_cooldown = False
-src.player.custom_sprite = False
-
-debug_mode = True
+head_animation = False
+body_animation_cooldown = False
 
 # MAIN LOOP
 # |-----------------------------------------------------------------------------------|
-map = src.mapClass.Map(window_width, window_height)
-isaac = src.player.Player(window_width//2 - 28, window_height//2 - 33)
-rooms = map.rooms
+map = src.map.Map(window_width, window_height)
+isaac = src.player.Player(window_width//2, window_height//2)
 tears = []
-enemies = []
-items = []
-current_room = [5, 5]
-
-itemsSpawn()
 
 if debug_mode:
+    isaac.damage = 10
+    isaac.speed = 15
+    isaac.attack_speed = 5
     for x in range(len(map.layout)):
         print(map.layout[x])
     for object in map.rooms:
@@ -120,7 +74,9 @@ while run:
     clock.tick(60)
 
     isaac.stationary = True
-    
+    door_collision = False
+    door_frame_collision = [False, False, False, False]
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -131,203 +87,251 @@ while run:
                 else:
                     pause = True
 
-        if event.type == cooldown_reset_event:
+        if event.type == cooldown_event:
             on_cooldown = False
-            pygame.time.set_timer(cooldown_reset_event, 0)
-        if event.type == damage_cooldown_reset_event:
+            pygame.time.set_timer(cooldown_event, 0)
+        if event.type == damage_cooldown_event:
             damage_cooldown = False
-            pygame.time.set_timer(damage_cooldown_reset_event, 0)
-        if event.type == custom_sprite_event:
-            src.player.custom_sprite = False
-            pygame.time.set_timer(custom_sprite_event, 0)
+            pygame.time.set_timer(damage_cooldown_event, 0)
+        if event.type == head_animation_event:
+            head_animation = False
+            pygame.time.set_timer(head_animation_event, 0)
+        if event.type == body_animation_cooldown_event:
+            body_animation_cooldown = False
+            pygame.time.set_timer(body_animation_cooldown_event, 0)
+        if event.type == hurt_animation_event:
+            isaac.hurt = False
+            pygame.time.set_timer(hurt_animation_event, 0)
 
-    for tear in tears:
-        if tear.x < window_width and tear.x > 0 and tear.y < window_height and tear.y > 0:
-            if tear.direction == "up":
-                tear.y -= tear.speed
-            elif tear.direction == "down":
-                tear.y += tear.speed
-            elif tear.direction == "left":
-                tear.x -= tear.speed
-            elif tear.direction == "right":
-                tear.x += tear.speed
-        else:
-            tears.pop(tears.index(tear))
-
-        for enemy in enemies:
-            if checkCollision(tear, enemy):
-                tears.pop(tears.index(tear))
-                enemy.hit()
-            if enemy.dead:
-                enemies.pop(enemies.index(enemy))
-
-    for enemy in enemies:
-        if checkCollision(isaac, enemy):
-            if not damage_cooldown:
-                isaac.hit()
-                damage_cooldown = True
-                pygame.time.set_timer(damage_cooldown_reset_event, 1000)
-                if not isaac.dead:
-                    src.player.custom_sprite = True
-                    pygame.time.set_timer(custom_sprite_event, 1000)
-
-
-    for room in rooms:
-        if room.room_index == [5, 5]:
-            room.visited = True
-
-        for door in room.doors:
-            if enemies:
-                door.closed = True
+    map.roomChange(isaac)
+    if not pause:
+        for tear in tears:
+            if not map.checkCollision(tear, map.walls):
+                tear.move()
             else:
-                door.closed = False
+                tear.delete(tears)
 
-            if map.layout[room.room_x][room.room_y] == 2 and len(room.doors) == 1:
-                door.is_treasure = True
-            if map.layout[room.room_x][room.room_y] == 3 and len(room.doors) == 1:
-                door.is_boss = True
+        for room in map.rooms:
+            if room.room_index == [5, 5]:
+                room.visited = True
 
-            for i in range(4):
-                if door.localisation == 1:
-                    if map.layout[room.room_x - 1][room.room_y] == 2:
-                        door.is_treasure = True
-                    if map.layout[room.room_x - 1][room.room_y] == 3:
-                        door.is_boss = True
-
-                if door.localisation == 2:
-                    if map.layout[room.room_x][room.room_y + 1] == 2:
-                        door.is_treasure = True
-                    if map.layout[room.room_x][room.room_y + 1] == 3:
-                        door.is_boss = True
-
-                if door.localisation == 3:
-                    if map.layout[room.room_x + 1][room.room_y] == 2:
-                        door.is_treasure = True
-                    if map.layout[room.room_x + 1][room.room_y] == 3:
-                        door.is_boss = True
-                        
-                if door.localisation == 4:
-                    if map.layout[room.room_x][room.room_y - 1] == 2:
-                        door.is_treasure = True
-                    if map.layout[room.room_x][room.room_y - 1] == 3:
-                        door.is_boss = True
-
-        if room.room_index == current_room:
-            if not room.visited:
-                for door in room.doors:
-                    door.closing = True
-                if room.room_type == 1:
-                    enemiesSpawn(room.number_of_enemies)
-                    room.visited = True
-                if room.room_type == 3:
-                    enemies.append(src.enemy.Enemy(400, 400, 200, 200, map.walls))
-                    room.visited = True
-
-            if checkCollision(isaac, room.doors):
-                door_collision = True
-            else:
-                door_collision = False
-
-            for item in room.items:
-                if enemies:
-                    item.hide = True
+            for door in room.doors:
+                if not room.enemies:
+                    door.open()
                 else:
-                    item.hide = False
-                
-                if checkCollision(isaac, item):
-                    item.effect(isaac)
-                    room.items.remove(item)
+                    door.close()
+                door.update()
 
-            if isaac.y <= 0:
-                isaac.x = window_width//2 - isaac.width//2
-                isaac.y = window_height - 100
-                current_room[0] -= 1
-            if isaac.x >= window_width:
-                isaac.x = 100 - isaac.width//2
-                isaac.y = window_height//2 - isaac.height//2
-                current_room[1] += 1
-            if isaac.y >= window_height:
-                isaac.x = window_width//2 - isaac.width//2
-                isaac.y = 100 - isaac.height//2
-                current_room[0] += 1
-            if isaac.x <= 0:
-                isaac.x = window_width - 100
-                isaac.y = window_height//2 - isaac.height//2
-                current_room[1] -= 1
-    print(pause)
-    keys = pygame.key.get_pressed()
-    if isaac.dead == False:
-        if keys[pygame.K_a]:
-            if not checkCollision(isaac, map.left_wall) or door_collision and not enemies:
-                isaac.x -= isaac.speed
-            if not keys[pygame.K_d]:
-                isaac.stationary = False
-            isaac.frame = 2
-        if keys[pygame.K_d]:
-            if not checkCollision(isaac, map.right_wall) or door_collision and not enemies:
-                isaac.x += isaac.speed
-            if not keys[pygame.K_a]:
-                isaac.stationary = False
-            isaac.frame = 3
-        if keys[pygame.K_s]:
-            if not checkCollision(isaac, map.bottom_wall) or door_collision and not enemies:
-                isaac.y += isaac.speed
-            if not keys[pygame.K_w]:
-                isaac.stationary = False
-            if not (keys[pygame.K_w] and keys[pygame.K_s]):
-                isaac.frame = 0
-        if keys[pygame.K_w]:
-            if not checkCollision(isaac, map.upper_wall) or door_collision and not enemies:
-                isaac.y -= isaac.speed
-            if not keys[pygame.K_s]:
-                isaac.stationary = False
-            if not (keys[pygame.K_w] and keys[pygame.K_s]):
-                isaac.frame = 1
-        if isaac.stationary:
-            isaac.frame = 0
+            if room.room_index == map.current_room:
+                if not room.enemies:
+                    room_empty = True
+                else:
+                    room_empty = False
+                for enemy in room.enemies:
+                    enemy.move(map.walls)
+                    if enemy.dead:
+                        room.enemies.pop(room.enemies.index(enemy))
+                    if not isaac.dead:
+                        if map.checkCollision(isaac, enemy):
+                            if not damage_cooldown:
+                                isaac.hit()
+                                damage_cooldown = True
+                                pygame.time.set_timer(damage_cooldown_event, 1000)
+                                pygame.time.set_timer(hurt_animation_event, isaac.hurt_animation_duration)
+                                
+                    for tear in tears:
+                        if map.checkCollision(tear, enemy):
+                            tears.pop(tears.index(tear))
+                            enemy.hit(isaac.damage)
 
-        if keys[pygame.K_UP]:
-            isaac.frame = 1
-            if not on_cooldown:
-                tears.append(src.projectile.Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "up"))
-                on_cooldown = True
-                pygame.time.set_timer(cooldown_reset_event, 1000//isaac.attack_speed)
+                if not room.visited:
+                    room.itemsSpawn(item_list)
+                    if room.room_type != 3:
+                        room.enemiesSpawn(room.number_of_enemies, isaac, map.walls)
+                        room.visited = True
+                    else:
+                        room.enemies.append(src.enemy.Enemy(400, 400, 200, 200))
+                        room.visited = True
 
-        elif keys[pygame.K_DOWN]:
-            isaac.frame = 0
-            if not on_cooldown:
-                tears.append(src.projectile.Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "down"))
-                on_cooldown = True
-                pygame.time.set_timer(cooldown_reset_event, 1000//isaac.attack_speed)
+                if map.checkCollision(isaac, room.doors):
+                    door_collision = True
+                    for door in room.doors:
+                        if door.localisation == 1 or door.localisation == 3:
+                            if isaac.y < 40 or isaac.y + isaac.height > window_height - 40:
+                                if isaac.x < door.x:
+                                    door_frame_collision[3] = True
+                                if isaac.x + isaac.width > door.x + door.width:
+                                    door_frame_collision[1] = True
 
-        elif keys[pygame.K_LEFT]:
-            isaac.frame = 2
-            if not on_cooldown:
-                tears.append(src.projectile.Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "left"))
-                on_cooldown = True
-                pygame.time.set_timer(cooldown_reset_event, 1000//isaac.attack_speed)
+                        if door.localisation == 2 or door.localisation == 4: 
+                            if isaac.x < 40 or isaac.x > window_width - 40:
+                                if isaac.y < door.y:
+                                    door_frame_collision[0] = True
+                                if isaac.y + isaac.height > door.y + door.height:
+                                    door_frame_collision[2] = True
 
-        elif keys[pygame.K_RIGHT]:
-            isaac.frame = 3
-            if not on_cooldown:
-                tears.append(src.projectile.Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "right"))
-                on_cooldown = True
-                pygame.time.set_timer(cooldown_reset_event, 1000//isaac.attack_speed)
+                for item in room.items:
+                    if room.enemies:
+                        item.hide = True
+                    else:
+                        item.hide = False
+                    
+                    if not item.hide:
+                        if map.checkCollision(isaac, item):
+                            item.effect(isaac)
+                            room.items.remove(item)
+
+        keys = pygame.key.get_pressed()
+
+        if isaac.dead == False:
+            if keys[pygame.K_a]:
+                if not keys[pygame.K_d]:
+                    if not (keys[pygame.K_w] != keys[pygame.K_s]):
+                        if isaac.body_frame <= 19:
+                            isaac.body_frame = 20
+                        if not body_animation_cooldown:
+                            isaac.body_frame += 1
+                            body_animation_cooldown = True
+                            pygame.time.set_timer(body_animation_cooldown_event, isaac.body_animation_duration)
+                        if isaac.body_frame > 29:
+                            isaac.body_frame = 20
+
+                    if not map.checkCollision(isaac, map.left_wall) or (door_collision and room_empty):
+                        if not door_frame_collision[3]:
+                            isaac.x -= isaac.speed
+                        if map.checkCollision(isaac, map.left_wall) and not (door_collision and room_empty):
+                            isaac.x = map.left_wall.x + map.left_wall.width
+
+                    isaac.stationary = False
+                if not head_animation:
+                    isaac.head_frame = 6
+
+            if keys[pygame.K_d]:
+                if not keys[pygame.K_a]:
+                    if not (keys[pygame.K_w] != keys[pygame.K_s]):
+                        if isaac.body_frame <= 9:
+                            isaac.body_frame = 10
+                        if not body_animation_cooldown:
+                            isaac.body_frame += 1
+                            body_animation_cooldown = True
+                            pygame.time.set_timer(body_animation_cooldown_event, isaac.body_animation_duration)
+                        if isaac.body_frame > 19:
+                            isaac.body_frame = 9
+
+                    if not map.checkCollision(isaac, map.right_wall) or (door_collision and room_empty):
+                        if not door_frame_collision[1]:
+                            isaac.x += isaac.speed
+                        if map.checkCollision(isaac, map.right_wall) and not (door_collision and room_empty):
+                            isaac.x = map.right_wall.x - isaac.width
+
+                    isaac.stationary = False
+                if not head_animation:
+                    isaac.head_frame = 2
+
+            if keys[pygame.K_s]:
+                if not keys[pygame.K_w]:
+                    if not body_animation_cooldown:
+                        isaac.body_frame += 1
+                        body_animation_cooldown = True
+                        pygame.time.set_timer(body_animation_cooldown_event, isaac.body_animation_duration)
+                        if isaac.body_frame > 9:
+                            isaac.body_frame = 0
+
+                    if not map.checkCollision(isaac, map.bottom_wall) or (door_collision and room_empty):
+                        if not door_frame_collision[2]:
+                            isaac.y += isaac.speed
+                        if map.checkCollision(isaac, map.bottom_wall) and not (door_collision and room_empty):
+                            isaac.y = map.bottom_wall.y - isaac.height
+
+                    isaac.stationary = False
+                if not (keys[pygame.K_w] and keys[pygame.K_s]):
+                    if not head_animation:
+                        isaac.head_frame = 0
+
+            if keys[pygame.K_w]:
+                if not keys[pygame.K_s]:
+                    if not body_animation_cooldown:
+                        isaac.body_frame += 1
+                        body_animation_cooldown = True
+                        pygame.time.set_timer(body_animation_cooldown_event, isaac.body_animation_duration)
+                    if isaac.body_frame > 9:
+                        isaac.body_frame = 0
+
+                    if not map.checkCollision(isaac, map.upper_wall) or (door_collision and room_empty):
+                        if not door_frame_collision[0]:
+                            isaac.y -= isaac.speed
+                        if map.checkCollision(isaac, map.upper_wall) and not (door_collision and room_empty):
+                            isaac.y = map.upper_wall.y + map.upper_wall.height
+                        
+                    isaac.stationary = False
+                if not (keys[pygame.K_w] and keys[pygame.K_s]):
+                    if not head_animation:
+                        isaac.head_frame = 4
+
+            if isaac.stationary:
+                if not head_animation:
+                    isaac.head_frame = 0
+                isaac.body_frame = 0
+
+            if keys[pygame.K_UP]:
+                if not head_animation:
+                    isaac.head_frame = 4
+                if not on_cooldown:
+                    isaac.head_frame = 5
+                    tears.append(src.projectile.Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "up"))
+                    on_cooldown = True
+                    head_animation = True
+                    pygame.time.set_timer(cooldown_event, 1000//isaac.attack_speed)
+                    pygame.time.set_timer(head_animation_event, isaac.head_animation_duration)
+
+            elif keys[pygame.K_DOWN]:
+                if not head_animation:
+                    isaac.head_frame = 0
+                if not on_cooldown:
+                    isaac.head_frame = 1
+                    tears.append(src.projectile.Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "down"))
+                    on_cooldown = True
+                    head_animation = True
+                    pygame.time.set_timer(cooldown_event, 1000//isaac.attack_speed)
+                    pygame.time.set_timer(head_animation_event, isaac.head_animation_duration)
+
+            elif keys[pygame.K_LEFT]:
+                if not head_animation:
+                    isaac.head_frame = 6
+                if not on_cooldown:
+                    isaac.head_frame = 7
+                    tears.append(src.projectile.Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "left"))
+                    on_cooldown = True
+                    head_animation = True
+                    pygame.time.set_timer(cooldown_event, 1000//isaac.attack_speed)
+                    pygame.time.set_timer(head_animation_event, isaac.head_animation_duration)
+
+            elif keys[pygame.K_RIGHT]:
+                if not head_animation:
+                    isaac.head_frame = 2
+                if not on_cooldown:
+                    isaac.head_frame = 3
+                    tears.append(src.projectile.Projectile(round(isaac.x + isaac.width//2), round(isaac.y + isaac.height//2), 10, (0,0,0), "right"))
+                    on_cooldown = True
+                    head_animation = True
+                    pygame.time.set_timer(cooldown_event, 1000//isaac.attack_speed)
+                    pygame.time.set_timer(head_animation_event, isaac.head_animation_duration)
 
         if debug_mode == True:
             if keys[pygame.K_SPACE]:
-                enemies = []
+                for room in map.rooms:
+                    room.enemies = []
             if keys[pygame.K_z]:
                 for x in range(11):
                     for y in range(11):
                         if map.layout[x][y] == 2:
-                            current_room = [x, y]
+                            map.current_room = [x, y]
                             break
             if keys[pygame.K_x]:
                 for x in range(11):
                     for y in range(11):
                         if map.layout[x][y] == 3:
-                            current_room = [x, y]
+                            map.current_room = [x, y]
                             break
     redrawGameWindow()
 

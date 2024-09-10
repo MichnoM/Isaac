@@ -9,16 +9,16 @@ class Item(object):
         self.height = 50
         self.stats = stats
         self.values = values
-        self.hide = False
+        self.hide = True
 
     def __str__(self):
         return f"stats: {self.stats}, values: {self.values}"
 
     def draw(self, window):
-        pygame.draw.rect(window, (255, 0, 0), (self.x, self.y, self.width, self.height))
+        if not self.hide:
+            pygame.draw.rect(window, (255, 0, 0), (self.x, self.y, self.width, self.height))
 
     def effect(self, character):
-        if not self.hide:
-            for i, stat in enumerate(self.stats):
-                if not (stat == "max_health" and character.max_health >= 8):
-                    setattr(character, stat, getattr(character, stat) + self.values[i])
+        for i, stat in enumerate(self.stats):
+            if not (stat == "max_health" and character.max_health >= 8):
+                setattr(character, stat, getattr(character, stat) + self.values[i])

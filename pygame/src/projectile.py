@@ -19,3 +19,16 @@ class Projectile(object):
     def draw(self, window):
         pygame.draw.circle(window, self.colour, (self.x, self.y), self.radius)
         window.blit(self.tear_sprite, (self.x - round(self.tear_sprite.get_width()//2), self.y - round(self.tear_sprite.get_height()//2)))
+
+    def move(self):
+        if self.direction == "up":
+            self.y -= self.speed
+        elif self.direction == "down":
+            self.y += self.speed
+        elif self.direction == "left":
+            self.x -= self.speed
+        elif self.direction == "right":
+            self.x += self.speed
+    
+    def delete(self, list):
+        list.pop(list.index(self))

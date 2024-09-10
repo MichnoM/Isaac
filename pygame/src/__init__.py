@@ -1,6 +1,6 @@
 from . import spritesheet
 from . import player
-from . import mapClass
+from . import map
 from . import projectile
 from . import enemy
 from . import room
