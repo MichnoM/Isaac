@@ -1,3 +1,6 @@
+'''
+pass
+'''
 from . import spritesheet
 from . import player
 from . import map

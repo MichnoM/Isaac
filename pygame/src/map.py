@@ -1,9 +1,13 @@
 import pygame
 import random
 from . import room
+from . import enemy
+from . import projectile
 
 class Map(object):
     def __init__(self, width, height, wall_thickness = 40):
+        self.x = 0
+        self.y = 0
         self.width = width
         self.height = height
         self.wall_thickness = wall_thickness
@@ -16,16 +20,40 @@ class Map(object):
         self.layout = []
         self.rooms = []
         self.number_of_rooms = 10
-        self.current_room = [5, 5]
+        self.current_room_index = [5, 5]
+        self.current_room = None
+        self.room_change = False
+        self.cooldown = 0
+
         self.mapLayout()
         self.roomCreation()
         self.doorTypeAssign()
 
-        self.background = pygame.image.load('sprites/Background.png')
+        self.background = pygame.image.load('sprites/Background.png').convert_alpha()
         self.background = pygame.transform.scale(self.background, (self.width, self.height))
 
     def draw(self, window):
+        if not self.room_change:
+            self.x = 0
+            self.y = 0
+        else:
+            if self.cooldown == 0:
+                if self.y > 0:
+                    self.y -= 10
+                if self.y < 0:
+                    self.y += 10
+                if self.x > 0:
+                    self.x -= 10
+                if self.x < 0:
+                    self.x += 10
+            self.cooldown += 1
+            if self.cooldown == 1:
+                self.cooldown = 0
         window.blit(self.background, (0, 0))
+
+        for room in self.rooms:
+            if room.room_index == self.current_room_index:
+                room.draw(window)
 
     def mapLayout(self):
         for row in range(11):
@@ -99,9 +127,9 @@ class Map(object):
     def doorTypeAssign(self):
         for room in self.rooms:
             for door in room.doors:
-                if room.room_type == 2:
+                if room.room_type == "treasure":
                     door.type = "treasure"
-                if room.room_type == 3:
+                if room.room_type == "boss":
                     door.type = "boss"
 
                 for i in range(4):
@@ -130,6 +158,9 @@ class Map(object):
                             door.type = "boss"
 
     def checkCollision(self, object1, object2, mode = 1):
+        '''
+        pass
+        '''
         # mode == 1 - checks for collision
         # mode == 2 - checks if one object is within another object
         if type(object2) == list:
@@ -157,16 +188,39 @@ class Map(object):
         if character.y <= 0:
             character.x = self.width//2 - character.width//2
             character.y = self.height - 100
-            self.current_room[0] -= 1
+            self.current_room_index[0] -= 1
+            self.room_change = True
+            self.y = 200
         if character.x >= self.width:
             character.x = 100 - character.width//2
             character.y = self.height//2 - character.height//2
-            self.current_room[1] += 1
+            self.current_room_index[1] += 1
+            self.room_change = True
+            self.x = -200
         if character.y >= self.height:
             character.x = self.width//2 - character.width//2
             character.y = 100 - character.height//2
-            self.current_room[0] += 1
+            self.current_room_index[0] += 1
+            self.room_change = True
+            self.y = -200
         if character.x <= 0:
             character.x = self.width - 100
             character.y = self.height//2 - character.height//2
-            self.current_room[1] -= 1
+            self.current_room_index[1] -= 1
+            self.room_change = True
+            self.x = 200
+
+    def update(self, character):
+        self.roomChange(character)
+        for room in self.rooms:
+            if room.room_index == self.current_room_index:
+                self.current_room = room
+
+        for room in self.rooms:
+            room.update(character, self)
+
+    def createTears(self, direction, character):
+        self.current_room.tears.append(projectile.Projectile(round(character.x + character.width//2), round(character.y + character.height//2), 10, (0,0,0), direction))
+
+    def checkDoorframeCollision(character, room):
+        pass

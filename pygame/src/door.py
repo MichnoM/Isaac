@@ -9,7 +9,7 @@ boss_door = pygame.image.load("sprites/BossDoors.png")
 boss_door_spritesheet = spritesheet.SpriteSheet(boss_door)
 
 class Door(object):
-    def __init__(self, x, y, width, height, localisation, type="reugular"):
+    def __init__(self, x, y, width, height, localisation, type="regular"):
         self.x = x
         self.y = y
         self.width = width
@@ -28,7 +28,12 @@ class Door(object):
     def __str__(self):
         return f"x: {self.x}, y: {self.y}, width: {self.width}, height: {self.height}, localisation: {self.localisation}"
     
-    def update(self):
+    def update(self, map):
+        if not map.current_room.empty:
+            self.close()
+        else:
+            self.open()
+
         current_time = pygame.time.get_ticks()
 
         if self.type == "boss":
@@ -94,3 +99,6 @@ class Door(object):
                     if self.localisation == 4:
                         door_centre_x -= 10
                     window.blit(sprite, (door_centre_x - self.sprite.get_width()//2, door_centre_y - self.sprite.get_height()//2))
+        # for frame in self.door_frames:
+        #     pygame.draw.rect(window, (200, 200, 200), frame)
+        

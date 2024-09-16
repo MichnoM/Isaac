@@ -55,3 +55,12 @@ class Enemy(object):
             self.health -= 1 * damage
             if self.health <= 0:
                 self.dead = True
+
+    def update(self, character, map):
+        self.move(map.walls)
+        if self.dead:
+            map.current_room.enemies.pop(map.current_room.enemies.index(self))
+        if not character.dead:
+            if map.checkCollision(character, self):
+                if not character.damage_taken_cooldown:
+                    character.hit()
