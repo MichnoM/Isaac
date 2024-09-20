@@ -18,7 +18,7 @@ class Door(object):
         self.type = type
         self.closed = False
         self.frame = 0
-        self.sprite = 0
+        self.sprite = None
         self.animating = False
         self.animation_speed = 20
         self.door_frames = []
@@ -28,8 +28,28 @@ class Door(object):
     def __str__(self):
         return f"x: {self.x}, y: {self.y}, width: {self.width}, height: {self.height}, localisation: {self.localisation}"
     
+    def draw(self, window):
+        for i in range(4):
+            if self.localisation == i + 1:
+                door_centre_x = self.x + self.width//2
+                door_centre_y = self.y + self.height//2
+                if self.type == "boss":
+                    self.sprite = boss_door_spritesheet.get_image(self.frame, 63, 41, 2, rotation_angle = i*-90)
+                else:
+                    self.sprite = door_spritesheet.get_image(self.frame, 51, 35, 2, rotation_angle = i*-90)
+                window.blit(self.sprite, (door_centre_x - self.sprite.get_width()//2, door_centre_y - self.sprite.get_height()//2))
+                if self.type == "treasure":
+                    sprite = pygame.transform.rotate(treasure_door, i*-90)
+                    if self.localisation == 1:
+                        door_centre_y -= 10
+                    if self.localisation == 4:
+                        door_centre_x -= 10
+                    window.blit(sprite, (door_centre_x - self.sprite.get_width()//2, door_centre_y - self.sprite.get_height()//2))
+        # for frame in self.door_frames:
+        #     pygame.draw.rect(window, (200, 200, 200), frame)
+    
     def update(self, map):
-        if not map.current_room.empty:
+        if map.current_room.enemies:
             self.close()
         else:
             self.open()
@@ -37,7 +57,7 @@ class Door(object):
         current_time = pygame.time.get_ticks()
 
         if self.type == "boss":
-            frames = 11
+            frames = 15
         else:
             frames = 13
 
@@ -81,24 +101,3 @@ class Door(object):
                     self.door_frames.pop(i+2)
                 else:
                     self.door_frames.pop(i-2)
-
-    def draw(self, window):
-        for i in range(4):
-            if self.localisation == i + 1:
-                door_centre_x = self.x + self.width//2
-                door_centre_y = self.y + self.height//2
-                if self.type == "boss":
-                    self.sprite = boss_door_spritesheet.get_image(self.frame, 63, 41, 2, rotation_angle = i*-90)
-                else:
-                    self.sprite = door_spritesheet.get_image(self.frame, 51, 35, 2, rotation_angle = i*-90)
-                window.blit(self.sprite, (door_centre_x - self.sprite.get_width()//2, door_centre_y - self.sprite.get_height()//2))
-                if self.type == "treasure":
-                    sprite = pygame.transform.rotate(treasure_door, i*-90)
-                    if self.localisation == 1:
-                        door_centre_y -= 10
-                    if self.localisation == 4:
-                        door_centre_x -= 10
-                    window.blit(sprite, (door_centre_x - self.sprite.get_width()//2, door_centre_y - self.sprite.get_height()//2))
-        # for frame in self.door_frames:
-        #     pygame.draw.rect(window, (200, 200, 200), frame)
-        

@@ -6,7 +6,8 @@ head_animation_event = pygame.USEREVENT + 3
 body_animation_cooldown_event = pygame.USEREVENT + 4
 hurt_animation_event = pygame.USEREVENT + 5
 pickup_item_event = pygame.USEREVENT + 6
-room_change_event = pygame.USEREVENT + 7
+pickup_pickup_event = pygame.USEREVENT + 7
+room_change_event = pygame.USEREVENT + 8
 
 class eventHandler():
     def __init__(self, map, character):
@@ -22,6 +23,7 @@ class eventHandler():
         self.damage_taken_check = False
         self.hurt_animation_check = False
         self.pickup_item_check = False
+        self.pickup_pickup_check = False
 
     def eventHandling(self):
         for event in pygame.event.get():
@@ -57,6 +59,7 @@ class eventHandler():
 
             if event.type == hurt_animation_event:
                 self.character.hurt = False
+                self.character.hurt_interaction = False
                 self.hurt_animation_check = False
                 pygame.time.set_timer(hurt_animation_event, 0)
 
@@ -64,6 +67,11 @@ class eventHandler():
                 self.character.pickup_item = False
                 self.pickup_item_check = False
                 pygame.time.set_timer(pickup_item_event, 0)
+
+            if event.type == pickup_pickup_event:
+                self.character.pickup_pickup = False
+                self.pickup_pickup_check = False
+                pygame.time.set_timer(pickup_pickup_event, 0)
 
             if event.type == room_change_event:
                 self.map.room_change = False
@@ -100,6 +108,11 @@ class eventHandler():
                 if not self.pickup_item_check:
                     pygame.time.set_timer(pickup_item_event, self.character.pickup_item_duration)
                     self.pickup_item_check = True
+
+            if self.character.pickup_pickup:
+                if not self.pickup_pickup_check:
+                    pygame.time.set_timer(pickup_pickup_event, self.character.pickup_pickup_duration)
+                    self.pickup_pickup_check = True
 
             if self.map.room_change:
                 if not self.map_change_check:

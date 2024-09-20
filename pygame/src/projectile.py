@@ -2,6 +2,7 @@ import pygame
 from . import spritesheet
 
 tear_sprites = pygame.image.load('sprites/Tear.png')
+
 tear_spritesheet = spritesheet.SpriteSheet(tear_sprites)
 
 class Projectile(object):
@@ -23,6 +24,19 @@ class Projectile(object):
         pygame.draw.circle(window, self.colour, (self.x, self.y), self.radius)
         window.blit(self.tear_sprite, (self.x - round(self.tear_sprite.get_width()//2), self.y - round(self.tear_sprite.get_height()//2)))
 
+    def update(self, character, map):
+        self.move(character.range)
+        if map.checkCollision(self, map.walls):
+            self.pop = True
+        if self.pop:
+            for room in map.rooms:
+                if self in room.tears:
+                    room.tears.remove(self)
+        for enemy in map.current_room.enemies:
+            if map.checkCollision(self, enemy):
+                self.pop = True
+                enemy.hit(character.damage)
+                
     def move(self, projectile_range):
         if self.distance_travelled < projectile_range*10:
             if self.direction == "up":
@@ -52,16 +66,3 @@ class Projectile(object):
 
     def delete(self, list):
         list.pop(list.index(self))
-
-    def update(self, character, map):
-        self.move(character.range)
-        if map.checkCollision(self, map.walls):
-            self.pop = True
-        if self.pop:
-            for room in map.rooms:
-                if self in room.tears:
-                    room.tears.remove(self)
-        for enemy in map.current_room.enemies:
-            if map.checkCollision(self, enemy):
-                self.pop = True
-                enemy.hit(character.damage)

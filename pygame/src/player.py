@@ -5,13 +5,10 @@ from settings import window_width, window_height
 isaac_walking_sprites = pygame.image.load('sprites/isaacWalking.png')
 isaac_head_sprites = pygame.image.load('sprites/isaacHead.png')
 isaac_hurt_sprites = pygame.image.load('sprites/isaacHurt.png')
+
 isaac_hurt_spritesheet = spritesheet.SpriteSheet(isaac_hurt_sprites)
 isaac_walking_spritesheet = spritesheet.SpriteSheet(isaac_walking_sprites)
 isaac_head_spritesheet = spritesheet.SpriteSheet(isaac_head_sprites)
-healthbar = pygame.image.load('sprites/HealthBar.png')
-healthbar = pygame.transform.scale(healthbar, (360, 45))
-healthbar_empty = pygame.image.load('sprites/HealthBarEmpty.png')
-healthbar_empty = pygame.transform.scale(healthbar_empty, (360, 45))
 
 class Player(object):
     def __init__(self, x, y, width=30, height=36):
@@ -21,6 +18,7 @@ class Player(object):
         self.attack_speed = 2
         self.damage = 2
         self.range = 5
+        self.luck = 0
         self.size = 2
     
         self.x = x
@@ -30,6 +28,12 @@ class Player(object):
         self.x -= self.width//2
         self.y -= self.height//2
 
+        self.bombs = 0
+        self.keys = 0
+        self.coins = 0
+
+        self.items = []
+
         self.stationary = True
         self.body_frame = 0
         self.head_frame = 0
@@ -37,6 +41,7 @@ class Player(object):
         self.dead = False
         self.hurt = False
         self.pickup_item = False
+        self.pickup_pickup = False
         self.door_collision = False
         self.doorframe_collision = [False, False, False, False]
 
@@ -47,8 +52,12 @@ class Player(object):
         self.body_animation_duration = 100
         self.hurt_animation_duration = 500
         self.pickup_item_duration = 1000
+        self.pickup_pickup_duration = 500
         self.body_animation_cooldown = False
         self.head_animation = False
+
+    def __str__(self):
+        return f"max_health: {self.max_health}, health: {self.health}, speed: {self.speed}, attack_speed: {self.attack_speed}, damage: {self.damage}, range: {self.range}, luck: {self.luck}, size: {self.size}"
 
     def draw(self, window):
         if not (self.hurt or self.dead or self.pickup_item):
@@ -62,22 +71,9 @@ class Player(object):
                 hurt_sprite = isaac_hurt_spritesheet.get_image(1, 36, 33, scale=self.size)
             if self.dead:
                 hurt_sprite = isaac_hurt_spritesheet.get_image(2, 36, 33, scale=self.size)
-            if self.pickup_item:
+            if self.pickup_item or self.pickup_pickup:
                 hurt_sprite = isaac_hurt_spritesheet.get_image(3, 36, 33, scale=self.size)
             window.blit(hurt_sprite, (self.x, self.y))
-
-    def drawHealthbar(self, window):
-        window.blit(healthbar_empty, (-360 + 45 * self.max_health, 10))
-        window.blit(healthbar, (-360 + 45 * self.health, 10))
-
-    def hit(self):
-        if not self.damage_taken_cooldown:
-            if self.health > 0:
-                self.hurt = True
-                self.health -= 1
-                if self.health <= 0:
-                    self.dead = True
-            self.damage_taken_cooldown = True
 
     def update(self):
         self.left_side = pygame.Rect(self.x, self.y+self.height//2-1, self.width//2, 2)
@@ -92,6 +88,16 @@ class Player(object):
                 self.head_frame = 0
             self.body_frame = 0
         self.stationary = True
+
+    def hit(self):
+        if not self.damage_taken_cooldown:
+            if self.health > 0:
+                self.hurt = True
+                self.hurt_interaction = True
+                self.health -= 1
+                if self.health <= 0:
+                    self.dead = True
+            self.damage_taken_cooldown = True
 
     def bodyAnimation(self, direction):
         if direction == "left":
@@ -133,31 +139,31 @@ class Player(object):
     def walk(self, direction, map):
         self.stationary = False
         if direction == "left":
-            if not map.checkCollision(self, map.left_wall) or (self.door_collision and map.current_room.empty):
+            if not map.checkCollision(self, map.left_wall) or (self.door_collision and not map.current_room.enemies):
                 if not self.doorframe_collision[3]:
                     self.x -= self.speed
-                if map.checkCollision(self, map.left_wall) and not (self.door_collision and map.current_room.empty):
+                if map.checkCollision(self, map.left_wall) and not (self.door_collision and not map.current_room.enemies):
                     self.x = map.left_wall.x + map.left_wall.width
 
         if direction == "right":
-            if not map.checkCollision(self, map.right_wall) or (self.door_collision and map.current_room.empty):
+            if not map.checkCollision(self, map.right_wall) or (self.door_collision and not map.current_room.enemies):
                 if not self.doorframe_collision[1]:
                     self.x += self.speed
-                if map.checkCollision(self, map.right_wall) and not (self.door_collision and map.current_room.empty):
+                if map.checkCollision(self, map.right_wall) and not (self.door_collision and not map.current_room.enemies):
                     self.x = map.right_wall.x - self.width
 
         if direction == "up":
-            if not map.checkCollision(self, map.upper_wall) or (self.door_collision and map.current_room.empty):
+            if not map.checkCollision(self, map.upper_wall) or (self.door_collision and not map.current_room.enemies):
                 if not self.doorframe_collision[0]:
                     self.y -= self.speed
-                if map.checkCollision(self, map.upper_wall) and not (self.door_collision and map.current_room.empty):
+                if map.checkCollision(self, map.upper_wall) and not (self.door_collision and not map.current_room.enemies):
                     self.y = map.upper_wall.y + map.upper_wall.height
 
         if direction == "down":
-            if not map.checkCollision(self, map.bottom_wall) or (self.door_collision and map.current_room.empty):
+            if not map.checkCollision(self, map.bottom_wall) or (self.door_collision and not map.current_room.enemies):
                 if not self.doorframe_collision[2]:
                     self.y += self.speed
-                if map.checkCollision(self, map.bottom_wall) and not (self.door_collision and map.current_room.empty):
+                if map.checkCollision(self, map.bottom_wall) and not (self.door_collision and not map.current_room.enemies):
                     self.y = map.bottom_wall.y - self.height
 
     def shoot(self, direction, map):

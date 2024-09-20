@@ -55,7 +55,23 @@ class Map(object):
             if room.room_index == self.current_room_index:
                 room.draw(window)
 
+    def update(self, character):
+        self.roomChange(character)
+        for room in self.rooms:
+            if room.room_index == self.current_room_index:
+                self.current_room = room
+
+        for room in self.rooms:
+            room.update(character, self)
+
+        for item in character.items:
+            self.itemEffects(item, character)
+
     def mapLayout(self):
+        '''
+        Creates the map layout. First it creates an 11x11 matrix filled with zeros and then it assigns room types starting from the centre.
+        The rooms have to be adjacent to each other, special rooms can have only one entrance.
+        '''
         for row in range(11):
             self.layout.append([])
             for column in range(11):
@@ -71,7 +87,7 @@ class Map(object):
                         if self.layout[row-1][column] == 1 or self.layout[row+1][column] == 1 or self.layout[row][column-1] == 1 or self.layout[row][column+1] == 1:
                             self.layout[row][column] = 1
                             break
-        for j in range(2):
+        for j in range(3):
             for n in range(100):
                     row = random.randint(1, 8)
                     column = random.randint(1, 8)
@@ -94,8 +110,11 @@ class Map(object):
                             if j == 0:
                                 self.layout[row][column] = 2
                                 break
-                            else:
+                            if j == 1:
                                 self.layout[row][column] = 3
+                                break
+                            else:
+                                self.layout[row][column] = 4
                                 break
 
     def roomCreation(self):
@@ -119,9 +138,11 @@ class Map(object):
                     if column == 1:
                         self.rooms.append(room.Room(random.randint(1, 6), room_x, room_y, door_layout, column))
                     if column == 2:
-                        self.rooms.append(room.Room(0, room_x, room_y, door_layout, column, 5))
+                        self.rooms.append(room.Room(0, room_x, room_y, door_layout, column, 1))
                     if column == 3:
                         self.rooms.append(room.Room(1, room_x, room_y, door_layout, column, 1))
+                    if column == 4:
+                        self.rooms.append(room.Room(0, room_x, room_y, door_layout, column, 5))
                     door_layout = []
 
     def doorTypeAssign(self):
@@ -131,31 +152,32 @@ class Map(object):
                     door.type = "treasure"
                 if room.room_type == "boss":
                     door.type = "boss"
+                if room.room_type == "shop":
+                    door.type = "shop"
 
-                for i in range(4):
+                for i in range(2, 5):
                     if door.localisation == 1:
-                        if self.layout[room.room_x - 1][room.room_y] == 2:
-                            door.type = "treasure"
-                        if self.layout[room.room_x - 1][room.room_y] == 3:
-                            door.type = "boss"
+                        if self.layout[room.room_x - 1][room.room_y] == i:
+                            door.type = i
 
                     if door.localisation == 2:
-                        if self.layout[room.room_x][room.room_y + 1] == 2:
-                            door.type = "treasure"
-                        if self.layout[room.room_x][room.room_y + 1] == 3:
-                            door.type = "boss"
+                        if self.layout[room.room_x][room.room_y + 1] == i:
+                            door.type = i
 
                     if door.localisation == 3:
-                        if self.layout[room.room_x + 1][room.room_y] == 2:
-                            door.type = "treasure"
-                        if self.layout[room.room_x + 1][room.room_y] == 3:
-                            door.type = "boss"
+                        if self.layout[room.room_x + 1][room.room_y] == i:
+                            door.type = i
                             
                     if door.localisation == 4:
-                        if self.layout[room.room_x][room.room_y - 1] == 2:
-                            door.type = "treasure"
-                        if self.layout[room.room_x][room.room_y - 1] == 3:
-                            door.type = "boss"
+                        if self.layout[room.room_x][room.room_y - 1] == i:
+                            door.type = i
+
+                if door.type == 2:
+                    door.type = "treasure"
+                if door.type == 3:
+                    door.type = "boss"
+                if door.type == 4:
+                    door.type = "shop"
 
     def checkCollision(self, object1, object2, mode = 1):
         '''
@@ -210,17 +232,14 @@ class Map(object):
             self.room_change = True
             self.x = 200
 
-    def update(self, character):
-        self.roomChange(character)
-        for room in self.rooms:
-            if room.room_index == self.current_room_index:
-                self.current_room = room
-
-        for room in self.rooms:
-            room.update(character, self)
-
     def createTears(self, direction, character):
         self.current_room.tears.append(projectile.Projectile(round(character.x + character.width//2), round(character.y + character.height//2), 10, (0,0,0), direction))
 
     def checkDoorframeCollision(character, room):
         pass
+
+    def itemEffects(self, item, character):
+        if item == "piggy bank":
+            if character.hurt and character.hurt_interaction:
+                self.current_room.itemsSpawn("pickup", character, character.x + 100, character.y, "coin")
+                character.hurt_interaction = False
