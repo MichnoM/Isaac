@@ -77,9 +77,14 @@ while run:
                         if map.checkCollision(isaac, pickup):
                             pickup.pickup(isaac)
 
-                    if map.checkCollision(isaac, room.doors):
-                        isaac.doorframeCollision(room)
-                    print(len(room.pickups))
+                    for door in room.doors:
+                        if map.checkCollision(isaac, door):
+                            if not door.closed:
+                                isaac.doorframeCollision(room)
+                            if door.locked and isaac.keys > 0:
+                                isaac.keys -= 1
+                                door.locked = False
+                        
             keys = pygame.key.get_pressed()
             if isaac.dead == False:
                 if keys[pygame.K_a]:

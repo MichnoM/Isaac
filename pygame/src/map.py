@@ -190,20 +190,20 @@ class Map(object):
                 if mode == 1:
                     if object1.x + object1.width > i.x and object1.x < i.x + i.width:
                         if object1.y + object1.height > i.y and object1.y < i.y + i.height:
-                            return True
+                            return object2
                 else:
                     if object1.x + object1.width <= i.x + i.width and object1.x >= i.x:
                         if object1.y + object1.height <= i.y + i.height and object1.y >= i.y:
-                            return True
+                            return object2
         else: 
             if mode == 1:
                 if object1.x + object1.width > object2.x and object1.x < object2.x + object2.width:
                     if object1.y + object1.height > object2.y and object1.y < object2.y + object2.height:
-                        return True
+                        return object2
             else:
                 if object1.x + object1.width <= object2.x + object2.width and object1.x >= object2.x:
                         if object1.y + object1.height <= object2.y + object2.height and object1.y >= object2.y:
-                            return True
+                            return object2
         return False
     
     def roomChange(self, character):
@@ -241,5 +241,5 @@ class Map(object):
     def itemEffects(self, item, character):
         if item == "piggy bank":
             if character.hurt and character.hurt_interaction:
-                self.current_room.itemsSpawn("pickup", character, character.x + 100, character.y, "coin")
+                self.current_room.itemsSpawn("pickup", character, character.x + 60, character.y + 50, "coin")
                 character.hurt_interaction = False

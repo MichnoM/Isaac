@@ -17,6 +17,7 @@ class Door(object):
         self.localisation = localisation
         self.type = type
         self.closed = False
+        self.locked = False
         self.frame = 0
         self.sprite = None
         self.animating = False
@@ -24,6 +25,7 @@ class Door(object):
         self.door_frames = []
         self.last_update_time = pygame.time.get_ticks()
         self.createDoorFrames()
+        self.lockDoor()
 
     def __str__(self):
         return f"x: {self.x}, y: {self.y}, width: {self.width}, height: {self.height}, localisation: {self.localisation}"
@@ -52,12 +54,15 @@ class Door(object):
         if map.current_room.enemies:
             self.close()
         else:
-            self.open()
+            if not self.locked:
+                self.open()
 
         current_time = pygame.time.get_ticks()
 
         if self.type == "boss":
             frames = 15
+        elif self.type == "shop":
+            frames = 14
         else:
             frames = 13
 
@@ -101,3 +106,7 @@ class Door(object):
                     self.door_frames.pop(i+2)
                 else:
                     self.door_frames.pop(i-2)
+
+    def lockDoor(self):
+        if self.type == "shop":
+            self.locked = True

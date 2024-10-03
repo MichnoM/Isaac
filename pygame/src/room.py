@@ -67,6 +67,7 @@ class Room(object):
         for pickup in self.pickups:
             pickup.update(character, map)
 
+        # clearing the objects from rooms other than the displayed one, but also saving their states.
         if self.room_index != map.current_room_index:
             if len(self.items) > 0:
                 self.items_spawned = False
@@ -181,7 +182,7 @@ class Room(object):
                         random_int = random.randint(0, len(pickup_list) - 1)
                         random_pickup = pickup_list[random_int]
                         for i in range(quantity):
-                            self.pickups.append(itemClass.Item(random_pickup[0], random_pickup[1], random_pickup[2], x = window_width//2 - 15 + i*20, y = window_height//2 - 15, width=30, height=30, type="pickup"))
+                            self.pickups.append(itemClass.Item(random_pickup[0], random_pickup[1], random_pickup[2], x = window_width//2 - 15 + i*20, y = window_height//2 - 15 + i*5, width=30, height=30, type="pickup"))
                 else:
                     for pickup in self.pickup_placeholder:
                         self.pickups.append(pickup)
@@ -197,5 +198,3 @@ class Room(object):
             for i in pickup_list:
                 if name == i[0]:
                     self.pickups.append(itemClass.Item(i[0], i[1], i[2], x=x, y=y, type="pickup"))
-                    print("pickup!")
-                    break
