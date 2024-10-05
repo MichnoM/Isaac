@@ -35,12 +35,15 @@ if debug_mode:
     isaac.attack_speed = 5
     isaac.luck = 4
     isaac.items.append("piggy bank")
+    isaac.coins = 98
     for x in range(len(map.layout)):
         print(map.layout[x])
     for object in map.rooms:
         print(object)
-        for door in object.doors:
-            print(door.type)
+        for item in object.items:
+            print(item)
+        # for door in object.doors:
+        #     print(door.locked)
 
 run = True
 pause = False
@@ -72,7 +75,9 @@ while run:
                     
                     for item in room.items:
                         if map.checkCollision(isaac, item):
-                            item.pickup(isaac)
+                            if isaac.coins >= item.price:
+                                item.pickup(isaac)
+
                     for pickup in room.pickups:
                         if map.checkCollision(isaac, pickup):
                             pickup.pickup(isaac)
@@ -147,6 +152,19 @@ while run:
                             if map.layout[x][y] == 4:
                                 map.current_room_index = [x, y]
                                 break
+
+                if keys[pygame.K_v]:
+                    for x in range(len(map.layout)):
+                        print(map.layout[x])
+                    for object in map.rooms:
+                        print(object)
+                        for item in object.items:
+                            print(item)
+                        for pickup in object.pickups:
+                            print(pickup)
+                
+                if keys[pygame.K_b]:
+                    print(isaac.items)
                             
     redrawGameWindow()
 
