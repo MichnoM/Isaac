@@ -1,5 +1,6 @@
 import pygame
 from . import spritesheet
+from settings import window_width, window_height
 
 door_sprites = pygame.image.load('sprites/Doors.png')
 door_spritesheet = spritesheet.SpriteSheet(door_sprites)
@@ -25,7 +26,6 @@ class Door(object):
         self.door_frames = []
         self.last_update_time = pygame.time.get_ticks()
         self.createDoorFrames()
-        self.lockDoor()
 
     def __str__(self):
         return f"x: {self.x}, y: {self.y}, width: {self.width}, height: {self.height}, localisation: {self.localisation}"
@@ -51,6 +51,17 @@ class Door(object):
         #     pygame.draw.rect(window, (200, 200, 200), frame)
     
     def update(self, map):
+        if self.localisation == 1:
+            self.x = window_width//2 - self.width//2
+        if self.localisation == 2:
+            self.x = window_width - self.width
+            self.y = window_height//2 - self.height//2
+        if self.localisation == 3:
+            self.x = window_width//2 - self.width//2
+            self.y = window_height - self.height
+        if self.localisation == 4:
+            self.y = window_height//2 - self.height//2
+
         if map.current_room.enemies:
             self.close()
         else:
@@ -66,22 +77,20 @@ class Door(object):
         else:
             frames = 13
 
-        if not self.animating:
-            return
+        if self.animating:
+            if current_time - self.last_update_time > self.animation_speed:
+                self.last_update_time = current_time
 
-        if current_time - self.last_update_time > self.animation_speed:
-            self.last_update_time = current_time
-
-            if self.closed:
-                if self.frame < frames - 1:
-                    self.frame += 1
+                if self.closed:
+                    if self.frame < frames - 1:
+                        self.frame += 1
+                    else:
+                        self.animating = False
                 else:
-                    self.animating = False
-            else:
-                if self.frame > 0:
-                    self.frame -= 1
-                else:
-                    self.animating = False
+                    if self.frame > 0:
+                        self.frame -= 1
+                    else:
+                        self.animating = False
 
     def open(self):
         if self.closed:
@@ -107,6 +116,3 @@ class Door(object):
                 else:
                     self.door_frames.pop(i-2)
 
-    def lockDoor(self):
-        if self.type == "shop":
-            self.locked = True

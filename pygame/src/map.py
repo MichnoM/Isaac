@@ -3,6 +3,8 @@ import random
 from . import room
 from . import enemy
 from . import projectile
+from settings import window_width, window_height
+import globals
 
 class Map(object):
     def __init__(self, width, height, wall_thickness = 40):
@@ -11,11 +13,6 @@ class Map(object):
         self.width = width
         self.height = height
         self.wall_thickness = wall_thickness
-        self.left_wall = pygame.Rect(0, 0, wall_thickness, height)
-        self.right_wall = pygame.Rect(width - wall_thickness, 0, wall_thickness, height)
-        self.upper_wall = pygame.Rect(0, 0, width, wall_thickness)
-        self.bottom_wall = pygame.Rect(0, height - wall_thickness-20, width, wall_thickness+20)
-        self.walls = [self.left_wall, self.right_wall, self.upper_wall, self.bottom_wall]
         self.blocks = []
         self.layout = []
         self.rooms = []
@@ -30,21 +27,20 @@ class Map(object):
         self.doorTypeAssign()
 
         self.background = pygame.image.load('sprites/Background.png').convert_alpha()
-        self.background = pygame.transform.scale(self.background, (self.width, self.height))
 
     def draw(self, window):
         if not self.room_change:
-            self.x = 0
-            self.y = 0
+            self.x = globals.window_width//2 - self.width//2
+            self.y = globals.window_height//2 - self.height//2
         else:
             if self.cooldown == 0:
-                if self.y > 0:
+                if self.y > globals.window_height//2 - self.height//2:
                     self.y -= 10
-                if self.y < 0:
+                if self.y < globals.window_height//2 - self.height//2:
                     self.y += 10
-                if self.x > 0:
+                if self.x > globals.window_width//2 - self.width//2:
                     self.x -= 10
-                if self.x < 0:
+                if self.x < globals.window_width//2 - self.width//2:
                     self.x += 10
             self.cooldown += 1
             if self.cooldown == 1:
@@ -56,6 +52,15 @@ class Map(object):
                 room.draw(window)
 
     def update(self, character):
+        self.width = window_width
+        self.height = window_height
+        self.background = pygame.transform.scale(self.background, (self.width, self.height))
+        self.left_wall = pygame.Rect(0, 0, self.wall_thickness, self.height)
+        self.right_wall = pygame.Rect(self.width - self.wall_thickness, 0, self.wall_thickness, self.height)
+        self.upper_wall = pygame.Rect(0, 0, self.width, self.wall_thickness)
+        self.bottom_wall = pygame.Rect(0, self.height - self.wall_thickness-20, self.width, self.wall_thickness+20)
+        self.walls = [self.left_wall, self.right_wall, self.upper_wall, self.bottom_wall]
+
         self.roomChange(character)
         for room in self.rooms:
             if room.room_index == self.current_room_index:
@@ -178,6 +183,7 @@ class Map(object):
                     door.type = "boss"
                 if door.type == 4:
                     door.type = "shop"
+                    door.locked = True
 
     def checkCollision(self, object1, object2, mode = 1):
         '''
@@ -212,25 +218,25 @@ class Map(object):
             character.y = self.height - 100
             self.current_room_index[0] -= 1
             self.room_change = True
-            self.y = 200
+            self.y += 200
         if character.x >= self.width:
             character.x = 100 - character.width//2
             character.y = self.height//2 - character.height//2
             self.current_room_index[1] += 1
             self.room_change = True
-            self.x = -200
+            self.x += -200
         if character.y >= self.height:
             character.x = self.width//2 - character.width//2
             character.y = 100 - character.height//2
             self.current_room_index[0] += 1
             self.room_change = True
-            self.y = -200
+            self.y += -200
         if character.x <= 0:
             character.x = self.width - 100
             character.y = self.height//2 - character.height//2
             self.current_room_index[1] -= 1
             self.room_change = True
-            self.x = 200
+            self.x += 200
 
     def createTears(self, direction, character):
         self.current_room.tears.append(projectile.Projectile(round(character.x + character.width//2), round(character.y + character.height//2), 10, (0,0,0), direction))
@@ -239,7 +245,18 @@ class Map(object):
         pass
 
     def itemEffects(self, item, character):
-        if item == "piggy bank":
+        if item.name == "piggy bank":
             if character.hurt and character.hurt_interaction:
                 self.current_room.itemsSpawn("pickup", character, character.x + 60, character.y + 50, "coin")
                 character.hurt_interaction = False
+
+        if item.name == "steam sale":
+            if not item.effect_done:
+                for room in self.rooms:
+                    for item in room.items:
+                        item.price = item.price//2
+                        item.effect_done = True
+
+        if item.name == "mom's key":
+            for room in self.rooms:
+                room.pickup_quantity = 2

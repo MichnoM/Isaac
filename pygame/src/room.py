@@ -22,6 +22,7 @@ class Room(object):
         self.items_spawned = False
         self.pickups = []
         self.pickups_spawned = False
+        self.pickup_quantity = 1
         self.enemies = []
         self.enemies_list = []
         self.tears = []
@@ -37,14 +38,6 @@ class Room(object):
     def draw(self, window):
         for door in self.doors:
             door.draw(window)
-        for item in self.items:
-            item.draw(window)
-        for pickup in self.pickups:
-            pickup.draw(window)
-        for enemy in self.enemies:
-            enemy.draw(window)
-        for tear in self.tears:
-            tear.draw(window)
 
     def update(self, character, map):
         if not self.enemies:
@@ -129,40 +122,51 @@ class Room(object):
         if len(self.enemies_list) == 0:
             if self.room_type == "regular":
                 for i in range(number_of_enemies):
-                    spawn_x = random.randint(boundaries[0].width + 100, boundaries[1].x - 100)
-                    spawn_y = random.randint(boundaries[2].height + 100, boundaries[3].y - 100)
-                    if spawn_x == character.x or spawn_y == character.y:
-                        for j in range(100):
-                            spawn_x = random.randint(boundaries[0].width + 100, boundaries[1].x - 100)
-                            spawn_y = random.randint(boundaries[2].height + 100, boundaries[3].y - 100)
-                    else:
-                        self.enemies_list.append((spawn_x, spawn_y, 50, 50))
+                    for j in range(100):
+                        spawn_x = random.randint(boundaries[0].width + 100, boundaries[1].x - 100)
+                        spawn_y = random.randint(boundaries[2].height + 100, boundaries[3].y - 100)
+                        if spawn_x not in range(character.x - 100, character.x + 100) or spawn_y not in range(character.y - 100, character.y + 100):
+                            break
+
+                    self.enemies_list.append((spawn_x, spawn_y, 50, 50))
 
             if self.room_type == "boss":
-                self.enemies_list.append((400, 400, 200, 200))
+                self.enemies_list.append((window_width//2 - 100, 10, 200, 200, "boss"))
 
         for i in self.enemies_list:
-            self.enemies.append(enemy.Enemy(i[0], i[1], i[2], i[3]))
+            self.enemies.append(enemy.Enemy(i[0], i[1], i[2], i[3], i[4]))
 
     def itemsSpawn(self, type, character, x=0, y=0, name = None):
         if name == None:
-            if type == "item" or "shop item":
+            if type == "item" or type == "shop item":
                 if self.placeholder == None:
                     for i in range(self.amount_of_items):
+                        spawned_items = []
+                        for item in self.items:
+                            spawned_items.append(item.name)
                         if type == "item":
-                            random_int = random.randint(0, len(item_list) - 1)
-                            random_item = item_list[random_int]
-                        if type == "shop item":
-                            random_int = random.randint(0, len(shop_items) - 1)
-                            random_item = shop_items[random_int]
-                        self.items.append(itemClass.Item(random_item[0], random_item[1], random_item[2]))
+                            for j in range(100):
+                                random_int = random.randint(0, len(item_list) - 1)
+                                random_item = item_list[random_int]
+                                if random_item[0] not in spawned_items:
+                                    break
 
-                    for item_id, item in enumerate(self.items):
-                        if self.amount_of_items != 1:
-                            if self.amount_of_items % 2 == 0:
-                                item.x = ((window_width//2 + item.width*1.5) - (self.amount_of_items * (item.width*2))) + 200*item_id
-                            else:
-                                item.x = ((window_width//2 + item.width*1.5) - (self.amount_of_items * (item.width*2))) + 200*item_id
+                        if type == "shop item":
+                            for j in range(100):
+                                random_int = random.randint(0, len(shop_items) - 1)
+                                random_item = shop_items[random_int]
+                                if random_item[0] not in spawned_items:
+                                    break
+
+                        if self.room_type == "shop":
+                            price = 15
+                        else:
+                            price = 0
+
+                        x = ((window_width//2 + 50*1.5) - (self.amount_of_items * (50*2))) + 200*i
+
+                        self.items.append(itemClass.Item(random_item[0], random_item[1], random_item[2], x, price=price, type=type, id=random_int))
+
                 else:
                     for item in self.placeholder:
                         self.items.append(item)
@@ -175,13 +179,15 @@ class Room(object):
                         chance = random.randint(1, 4 - character.luck)
                     else:
                         chance = 1
-                    quantity = 1
-                    if "mom's key" in character.items:
-                        quantity = 2
+
                     if chance == 1:
                         random_int = random.randint(0, len(pickup_list) - 1)
                         random_pickup = pickup_list[random_int]
-                        for i in range(quantity):
+                        for item in character.items:
+                            if item.name == "bogo bombs":
+                                if random_pickup[0] == "bomb":
+                                    self.pickup_quantity = 2
+                        for i in range(self.pickup_quantity):
                             self.pickups.append(itemClass.Item(random_pickup[0], random_pickup[1], random_pickup[2], x = window_width//2 - 15 + i*20, y = window_height//2 - 15 + i*5, width=30, height=30, type="pickup"))
                 else:
                     for pickup in self.pickup_placeholder:

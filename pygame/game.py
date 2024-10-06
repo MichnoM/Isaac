@@ -3,20 +3,33 @@ import src
 from src.items import item_list, pickup_list, shop_items
 from settings import window_width, window_height, debug_mode
 import eventHandler
+import globals
+import ctypes
+# ctypes.windll.user32.SetProcessDPIAware()
 
 pygame.init()
 
-window = pygame.display.set_mode((window_width, window_height))
+monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
+window = pygame.display.set_mode((window_width, window_height), pygame.SCALED)
 gui = src.gui.Gui()
 pygame.display.set_caption("Game")
 
 clock = pygame.time.Clock()
                 
 def redrawGameWindow():
-    background = pygame.Surface((window_width, window_height))
+    background = pygame.Surface((globals.window_width, globals.window_height))
     screen = pygame.Surface((window_width, window_height))
     map.draw(screen)
     isaac.draw(screen)
+    for room in map.rooms:
+        for item in room.items:
+            item.draw(screen)
+        for pickup in room.pickups:
+            pickup.draw(screen)
+        for enemy in room.enemies:
+            enemy.draw(screen)
+        for tear in room.tears:
+            tear.draw(screen)
     window.blit(background, (0, 0))
     window.blit(screen, (map.x, map.y))
     gui.draw(window, isaac, pause)
@@ -27,15 +40,14 @@ def redrawGameWindow():
 # |-----------------------------------------------------------------------------------|
 map = src.map.Map(window_width, window_height)
 isaac = src.player.Player(window_width//2, window_height//2)
-event_handler = eventHandler.eventHandler(map, isaac)
+event_handler = eventHandler.eventHandler(map, isaac, window, monitor_size)
 
 if debug_mode:
     isaac.damage = 10
     isaac.speed = 15
     isaac.attack_speed = 5
     isaac.luck = 4
-    isaac.items.append("piggy bank")
-    isaac.coins = 98
+    isaac.coins = 50
     for x in range(len(map.layout)):
         print(map.layout[x])
     for object in map.rooms:
@@ -50,7 +62,9 @@ pause = False
 while run:
     clock.tick(60)
 
-    run, pause = event_handler.eventHandling()
+    run, pause, window = event_handler.eventHandling()
+    globals.window_width = window.get_width()
+    globals.window_height = window.get_height()
 
     if not pause:
         map.update(isaac)
@@ -75,7 +89,10 @@ while run:
                     
                     for item in room.items:
                         if map.checkCollision(isaac, item):
-                            if isaac.coins >= item.price:
+                            if room.room_type == "shop":
+                                if isaac.coins >= item.price:
+                                    item.pickup(isaac)
+                            else:
                                 item.pickup(isaac)
 
                     for pickup in room.pickups:
@@ -165,6 +182,7 @@ while run:
                 
                 if keys[pygame.K_b]:
                     print(isaac.items)
+                    print(isaac.x, isaac.y)
                             
     redrawGameWindow()
 

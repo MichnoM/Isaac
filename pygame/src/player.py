@@ -81,6 +81,7 @@ class Player(object):
         self.top_side = pygame.Rect(self.x+self.width//2-1, self.y, 2, self.height//2)
         self.bottom_side = pygame.Rect(self.x+self.width//2-1, self.y+self.height//2, 2, self.height//2)
         self.sides = [self.left_side, self.right_side, self.top_side, self.bottom_side]
+        
         self.door_collision = False
         self.doorframe_collision = [False, False, False, False]
         if self.stationary:

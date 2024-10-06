@@ -1,4 +1,5 @@
 import pygame
+from settings import window_width, window_height
 
 cooldown_event = pygame.USEREVENT + 1
 damage_taken_cooldown_event = pygame.USEREVENT + 2
@@ -10,11 +11,14 @@ pickup_pickup_event = pygame.USEREVENT + 7
 room_change_event = pygame.USEREVENT + 8
 
 class eventHandler():
-    def __init__(self, map, character):
+    def __init__(self, map, character, window, monitor_size):
         self.map = map
         self.character = character
         self.run = True
         self.pause = False
+        self.window = window
+        self.monitor_size = monitor_size
+        self.fullscreen = False
 
         self.map_change_check = False
         self.cooldown_check = False
@@ -29,6 +33,7 @@ class eventHandler():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.run = False
+
             if event.type == pygame.KEYDOWN:
                 if event.key ==  pygame.K_ESCAPE:
                     if not self.map.room_change:
@@ -36,6 +41,13 @@ class eventHandler():
                             self.pause = False
                         else:
                             self.pause = True
+                            
+                if event.key == pygame.K_f:
+                    self.fullscreen = not self.fullscreen
+                    if self.fullscreen:
+                        self.window = pygame.display.set_mode(self.monitor_size, pygame.SCALED | pygame.FULLSCREEN)
+                    else:
+                        self.window = pygame.display.set_mode((window_width, window_height), pygame.SCALED)
 
             if event.type == cooldown_event:
                 self.character.shooting_cooldown = False
@@ -119,4 +131,4 @@ class eventHandler():
                     pygame.time.set_timer(room_change_event, 300)
                     self.map_change_check = True
 
-        return self.run, self.pause
+        return self.run, self.pause, self.window

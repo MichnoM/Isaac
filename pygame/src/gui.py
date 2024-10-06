@@ -1,5 +1,6 @@
 import pygame
-from settings import window_width, window_height, debug_mode
+from settings import debug_mode
+import globals
 
 _circle_cache = {}
 
@@ -17,8 +18,8 @@ font = pygame.font.Font("font/upheavtt.ttf", 40)
 
 class Gui(object):
     def __init__(self):
-        self.width = window_width
-        self.height = window_height
+        self.width = globals.window_width
+        self.height = globals.window_height
 
     def draw(self, window, character, pause):
         gui = pygame.Surface((self.width, self.height))
@@ -30,23 +31,28 @@ class Gui(object):
         gui.blit(self.render(f"{character.bombs}", font), (60*0.75, 153))
         gui.blit(self.render(f"{character.keys}", font), (60*0.75, 203))
         if debug_mode:
-            pygame.draw.line(gui, (0, 0, 255), (window_width//2, window_height), (window_width//2, 0))
-            pygame.draw.line(gui, (0, 0, 255), (0, window_height//2), (window_width, window_height//2))
-            for side in character.sides:
-                pygame.draw.rect(gui, (100, 100, 100), side)
+            pygame.draw.line(gui, (0, 0, 255), (self.width//2, self.height), (self.width//2, 0))
+            pygame.draw.line(gui, (0, 0, 255), (0, self.height//2), (self.width, self.height//2))
+            # for side in character.sides:
+            #     pygame.draw.rect(gui, (100, 100, 100), side)
 
         if pause:
             label = font.render(f"Damage: {character.damage}, Attack Speed: {character.attack_speed}, Speed: {character.speed}", 1, (255, 255, 255))
-            menu = pygame.Surface((window_width//2, window_height//2))
+            menu = pygame.Surface((self.width//2, self.height//2))
             menu.fill((0, 0, 0))
             menu.blit(label, (menu.get_width()//10, menu.get_width()//10))
-            gui.blit(menu, (window_width//4, window_height//4, window_width//2, window_height//2))
+            gui.blit(menu, (self.width//4, self.height//4, self.width//2, self.height//2))
 
         window.blit(gui, (0, 0))
+        self.update()
 
     def drawHealthbar(self, window, character):
         window.blit(healthbar_empty, (-360 + 45 * character.max_health, 10))
         window.blit(healthbar, (-360 + 45 * character.health, 10))
+
+    def update(self):
+        self.width = globals.window_width
+        self.height = globals.window_height
 
     def _circlepoints(self, r):
         r = int(round(r))

@@ -6,13 +6,12 @@ test_item5 = "name5", ["damage"], [2]
 
 item_list = [test_item1, test_item2, test_item3, test_item4, test_item5]
 
-booomba = "booomba", ["bombs"], [10]
 moms_key = "mom's key", ["keys"], [2] # doubles the pickups spawn
 piggy_bank = "piggy bank", ["coins"], [3] # when taking damage, spawn 1-2 coins
 steam_sale = "steam sale", [""], [""] # shop prices -50%
 bogo_bombs = "bogo bombs", [""], [""] # all bomb pickups are now doubled
 
-shop_items = [booomba, moms_key, piggy_bank, steam_sale, bogo_bombs]
+shop_items = [moms_key, piggy_bank, steam_sale, bogo_bombs]
 
 heart_container = "heart", ["health"], [1]
 key = "key", ["keys"], [1]
