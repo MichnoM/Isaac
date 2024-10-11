@@ -16,7 +16,7 @@ pygame.init()
 
 font = pygame.font.Font("font/upheavtt.ttf", 40)
 
-class Gui(object):
+class Gui:
     def __init__(self):
         self.width = globals.window_width
         self.height = globals.window_height

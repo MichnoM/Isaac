@@ -1,7 +1,7 @@
 import pygame
 import random
 
-class Enemy(object):
+class Enemy:
     def __init__(self, x, y, width, height, type="regular"):
         self.x = x
         self.y = y
@@ -12,7 +12,6 @@ class Enemy(object):
         self.speed_y = 3
         self.direction_x = 1
         self.direction_y = 1
-        self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
         self.health = 10
         self.cooldown_tracker = 0
         self.direction = random.randint(1, 4)

@@ -1,11 +1,10 @@
 import pygame
 import src
 from src.items import item_list, pickup_list, shop_items
-from settings import window_width, window_height, debug_mode
+from settings import window_width, window_height, debug_mode, gamemode
 import eventHandler
 import globals
-import ctypes
-# ctypes.windll.user32.SetProcessDPIAware()
+from src.network import Network
 
 pygame.init()
 
@@ -18,10 +17,16 @@ clock = pygame.time.Clock()
                 
 def redrawGameWindow():
     background = pygame.Surface((globals.window_width, globals.window_height))
+    background.fill((30,30,30))
     screen = pygame.Surface((window_width, window_height))
     map.draw(screen)
     isaac.draw(screen)
+    if gamemode != "Singleplayer":
+        p2.draw(screen)
     for room in map.rooms:
+        # if room.room_index == map.current_room_index:
+        #     for door in room.doors:
+        #         door.draw(screen)
         for item in room.items:
             item.draw(screen)
         for pickup in room.pickups:
@@ -38,8 +43,13 @@ def redrawGameWindow():
 
 # MAIN LOOP
 # |-----------------------------------------------------------------------------------|
-map = src.map.Map(window_width, window_height)
-isaac = src.player.Player(window_width//2, window_height//2)
+if gamemode == "Singleplayer":
+    map = src.map.Map(window_width, window_height)
+    isaac = src.player.Player(window_width//2, window_height//2)
+else:
+    n = Network()
+    isaac = n.getP()
+    map = n.getMap()
 event_handler = eventHandler.eventHandler(map, isaac, window, monitor_size)
 
 if debug_mode:
@@ -48,20 +58,15 @@ if debug_mode:
     isaac.attack_speed = 5
     isaac.luck = 4
     isaac.coins = 50
-    for x in range(len(map.layout)):
-        print(map.layout[x])
-    for object in map.rooms:
-        print(object)
-        for item in object.items:
-            print(item)
-        # for door in object.doors:
-        #     print(door.locked)
 
 run = True
 pause = False
 while run:
     clock.tick(60)
-
+    if gamemode != "Singleplayer":
+        info = n.send((map, isaac))
+        map = info[0]
+        p2 = info[1]
     run, pause, window = event_handler.eventHandling()
     globals.window_width = window.get_width()
     globals.window_height = window.get_height()

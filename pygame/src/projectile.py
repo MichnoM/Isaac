@@ -5,7 +5,7 @@ tear_sprites = pygame.image.load('sprites/Tear.png')
 
 tear_spritesheet = spritesheet.SpriteSheet(tear_sprites)
 
-class Projectile(object):
+class Projectile:
     def __init__(self, x, y, radius, colour, direction):
         self.x = x
         self.y = y

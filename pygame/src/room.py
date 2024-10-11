@@ -5,7 +5,7 @@ from . import item as itemClass
 from .items import item_list, shop_items, pickup_list
 from settings import window_width, window_height
 
-class Room(object):
+class Room:
     def __init__(self, number_of_enemies, room_x, room_y, door_placement, room_type, amount_of_items = 0):
         self.number_of_enemies = number_of_enemies
         self.room_x = room_x
@@ -36,8 +36,7 @@ class Room(object):
         return f"enemies: {self.number_of_enemies}, x: {self.room_x}, y: {self.room_y}, door placement: {self.door_placement}, type: {self.room_type}\n items: {self.items}, pickups: {self.pickups}"
 
     def draw(self, window):
-        for door in self.doors:
-            door.draw(window)
+        pass
 
     def update(self, character, map):
         if not self.enemies:
@@ -128,7 +127,7 @@ class Room(object):
                         if spawn_x not in range(character.x - 100, character.x + 100) or spawn_y not in range(character.y - 100, character.y + 100):
                             break
 
-                    self.enemies_list.append((spawn_x, spawn_y, 50, 50))
+                    self.enemies_list.append((spawn_x, spawn_y, 50, 50, "regular"))
 
             if self.room_type == "boss":
                 self.enemies_list.append((window_width//2 - 100, 10, 200, 200, "boss"))

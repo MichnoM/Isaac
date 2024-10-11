@@ -10,7 +10,7 @@ pickup_item_event = pygame.USEREVENT + 6
 pickup_pickup_event = pygame.USEREVENT + 7
 room_change_event = pygame.USEREVENT + 8
 
-class eventHandler():
+class eventHandler:
     def __init__(self, map, character, window, monitor_size):
         self.map = map
         self.character = character

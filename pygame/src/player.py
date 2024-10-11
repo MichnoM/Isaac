@@ -10,7 +10,7 @@ isaac_hurt_spritesheet = spritesheet.SpriteSheet(isaac_hurt_sprites)
 isaac_walking_spritesheet = spritesheet.SpriteSheet(isaac_walking_sprites)
 isaac_head_spritesheet = spritesheet.SpriteSheet(isaac_head_sprites)
 
-class Player(object):
+class Player:
     def __init__(self, x, y, width=30, height=36):
         self.health = 5
         self.max_health = 5
