@@ -9,7 +9,7 @@ treasure_door = pygame.transform.scale(treasure_door, (51*2, 40*2))
 boss_door = pygame.image.load("sprites/BossDoors.png")
 boss_door_spritesheet = spritesheet.SpriteSheet(boss_door)
 
-class Door(object):
+class Door:
     def __init__(self, x, y, width, height, localisation, type="regular"):
         self.x = x
         self.y = y

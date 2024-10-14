@@ -16,7 +16,7 @@ pygame.init()
 
 font = pygame.font.Font("font/upheavtt.ttf", 40)
 
-class Gui(object):
+class Gui:
     def __init__(self):
         self.width = globals.window_width
         self.height = globals.window_height
@@ -30,9 +30,9 @@ class Gui(object):
         gui.blit(self.render(f"{character.coins}", font), (60*0.75, 103))
         gui.blit(self.render(f"{character.bombs}", font), (60*0.75, 153))
         gui.blit(self.render(f"{character.keys}", font), (60*0.75, 203))
-        if debug_mode:
-            pygame.draw.line(gui, (0, 0, 255), (self.width//2, self.height), (self.width//2, 0))
-            pygame.draw.line(gui, (0, 0, 255), (0, self.height//2), (self.width, self.height//2))
+        # if debug_mode:
+        #     pygame.draw.line(gui, (0, 0, 255), (self.width//2, self.height), (self.width//2, 0))
+        #     pygame.draw.line(gui, (0, 0, 255), (0, self.height//2), (self.width, self.height//2))
             # for side in character.sides:
             #     pygame.draw.rect(gui, (100, 100, 100), side)
 

@@ -22,7 +22,7 @@ pygame.init()
 
 font = pygame.font.Font("font/upheavtt.ttf", 40)
 
-class Item(object):
+class Item:
     def __init__(self, name, stats, values, x = window_width//2 - 25, y = window_height//2 - 25, width=50, height=50, type=None, price = 0, id=None):
         self.x = x
         self.y = y
@@ -49,7 +49,7 @@ class Item(object):
         if self.type == "shop item":
             self.sprite = item_spritesheet.get_image(self.id, 150, 130, 0.5)
         else:
-            self.sprite = pygame.image.load("sprites/dgf.png")
+            self.sprite = key_sprite
 
         if self.name == "key":
             self.sprite = key_sprite

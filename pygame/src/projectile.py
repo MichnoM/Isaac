@@ -5,7 +5,7 @@ tear_sprites = pygame.image.load('sprites/Tear.png')
 
 tear_spritesheet = spritesheet.SpriteSheet(tear_sprites)
 
-class Projectile(object):
+class Projectile:
     def __init__(self, x, y, radius, colour, direction):
         self.x = x
         self.y = y
@@ -19,6 +19,7 @@ class Projectile(object):
         self.distance_travelled = 0
         self.pop = False
         self.check = 0
+        self.did_hit = False
 
     def draw(self, window):
         pygame.draw.circle(window, self.colour, (self.x, self.y), self.radius)
@@ -34,8 +35,10 @@ class Projectile(object):
                     room.tears.remove(self)
         for enemy in map.current_room.enemies:
             if map.checkCollision(self, enemy):
-                self.pop = True
-                enemy.hit(character.damage)
+                if not self.did_hit:
+                    self.did_hit = True
+                    self.pop = True
+                    enemy.hit(character.damage)
                 
     def move(self, projectile_range):
         if self.distance_travelled < projectile_range*10:
@@ -64,5 +67,3 @@ class Projectile(object):
             else:
                 self.pop = True
 
-    def delete(self, list):
-        list.pop(list.index(self))

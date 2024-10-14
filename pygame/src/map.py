@@ -6,7 +6,9 @@ from . import projectile
 from settings import window_width, window_height
 import globals
 
-class Map(object):
+background = pygame.image.load('sprites/Background.png')
+
+class Map:
     def __init__(self, width, height, wall_thickness = 40):
         self.x = 0
         self.y = 0
@@ -26,7 +28,11 @@ class Map(object):
         self.roomCreation()
         self.doorTypeAssign()
 
-        self.background = pygame.image.load('sprites/Background.png').convert_alpha()
+    def __str__(self):
+        layout = ""
+        for x in self.layout:
+            layout += f"{x}\n"
+        return f"{layout}"
 
     def draw(self, window):
         if not self.room_change:
@@ -45,16 +51,17 @@ class Map(object):
             self.cooldown += 1
             if self.cooldown == 1:
                 self.cooldown = 0
-        window.blit(self.background, (0, 0))
+        sprite = pygame.transform.scale(background, (self.width, self.height))
+        window.blit(sprite, (0, 0))
 
         for room in self.rooms:
             if room.room_index == self.current_room_index:
-                room.draw(window)
+                for door in room.doors:
+                    door.draw(window)
 
     def update(self, character):
         self.width = window_width
         self.height = window_height
-        self.background = pygame.transform.scale(self.background, (self.width, self.height))
         self.left_wall = pygame.Rect(0, 0, self.wall_thickness, self.height)
         self.right_wall = pygame.Rect(self.width - self.wall_thickness, 0, self.wall_thickness, self.height)
         self.upper_wall = pygame.Rect(0, 0, self.width, self.wall_thickness)

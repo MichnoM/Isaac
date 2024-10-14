@@ -11,3 +11,4 @@ from . import door
 from . import item
 from . import items
 from . import gui
+from . import enemies

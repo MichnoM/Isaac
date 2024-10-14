@@ -1,11 +1,8 @@
 import pygame
 import src
-from src.items import item_list, pickup_list, shop_items
 from settings import window_width, window_height, debug_mode
 import eventHandler
 import globals
-import ctypes
-# ctypes.windll.user32.SetProcessDPIAware()
 
 pygame.init()
 
@@ -18,6 +15,7 @@ clock = pygame.time.Clock()
                 
 def redrawGameWindow():
     background = pygame.Surface((globals.window_width, globals.window_height))
+    background.fill((30,30,30))
     screen = pygame.Surface((window_width, window_height))
     map.draw(screen)
     isaac.draw(screen)
@@ -48,20 +46,11 @@ if debug_mode:
     isaac.attack_speed = 5
     isaac.luck = 4
     isaac.coins = 50
-    for x in range(len(map.layout)):
-        print(map.layout[x])
-    for object in map.rooms:
-        print(object)
-        for item in object.items:
-            print(item)
-        # for door in object.doors:
-        #     print(door.locked)
 
 run = True
 pause = False
 while run:
     clock.tick(60)
-
     run, pause, window = event_handler.eventHandling()
     globals.window_width = window.get_width()
     globals.window_height = window.get_height()

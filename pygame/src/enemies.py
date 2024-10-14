@@ -1,0 +1,1 @@
+bosses = ["the haunt", "fistula"]
