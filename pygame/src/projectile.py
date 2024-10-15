@@ -9,6 +9,8 @@ class Projectile:
     def __init__(self, x, y, radius, colour, direction):
         self.x = x
         self.y = y
+        self.starting_x = x
+        self.starting_y = y
         self.radius = radius
         self.colour = colour
         self.speed = 8
@@ -20,6 +22,7 @@ class Projectile:
         self.pop = False
         self.check = 0
         self.did_hit = False
+        self.updated = False
 
     def draw(self, window):
         pygame.draw.circle(window, self.colour, (self.x, self.y), self.radius)
@@ -27,6 +30,9 @@ class Projectile:
 
     def update(self, character, map):
         self.move(character.range)
+        if not self.updated:
+            self.speed *= character.shot_speed
+            self.updated = True
         if map.checkCollision(self, map.walls):
             self.pop = True
         if self.pop:
@@ -41,7 +47,7 @@ class Projectile:
                     enemy.hit(character.damage)
                 
     def move(self, projectile_range):
-        if self.distance_travelled < projectile_range*10:
+        if self.distance_travelled < projectile_range*50:
             if self.direction == "up":
                 self.y -= self.speed
             elif self.direction == "down":
@@ -50,7 +56,7 @@ class Projectile:
                 self.x -= self.speed
             elif self.direction == "right":
                 self.x += self.speed
-            self.distance_travelled += 1
+            self.distance_travelled += self.speed
         else:
             if self.check < 5:
                 if self.direction == "up":

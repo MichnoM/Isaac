@@ -20,6 +20,8 @@ class Player:
         self.range = 5
         self.luck = 0
         self.size = 2
+        self.damage_multiplier = 1
+        self.shot_speed = 1
     
         self.x = x
         self.y = y

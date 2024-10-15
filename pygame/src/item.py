@@ -3,10 +3,13 @@ from . import spritesheet
 from settings import window_width, window_height
 from . import map
 
-item_sprites = pygame.image.load("sprites/items.png")
-item_spritesheet = spritesheet.SpriteSheet(item_sprites)
+items_sprites = pygame.image.load("sprites/items.png")
+shop_items_sprites = pygame.image.load("sprites/shopItems.png")
 
-item_sprites = pygame.transform.scale(item_sprites, (50, 50))
+shop_items = pygame.transform.scale(shop_items_sprites, (50, 50))
+
+items_spritesheet = spritesheet.SpriteSheet(items_sprites)
+shop_items_spritesheet = spritesheet.SpriteSheet(shop_items_sprites)
 
 key_sprite = pygame.image.load("sprites/key.png")
 bomb_sprite = pygame.image.load("sprites/bomb.png")
@@ -43,13 +46,17 @@ class Item:
         self.pickups = ["key", "bomb", "coin", "heart"]
 
     def __str__(self):
-        return f"type: {self.type}, name: {self.name} stats: {self.stats}, values: {self.values}, price: {self.price}"
+        return f"type: {self.type}, name: {self.name} stats: {self.stats}, values: {self.values}, price: {self.price}, id: {self.id}"
 
     def draw(self, window):
-        if self.type == "shop item":
-            self.sprite = item_spritesheet.get_image(self.id, 150, 130, 0.5)
+        if self.id != None:
+            frame, row = self.idToFrame(self.id)
         else:
-            self.sprite = key_sprite
+            frame, row = 0, 0
+        if self.type == "shop item":
+            self.sprite = shop_items_spritesheet.get_image(frame, 150, 150, 0.5, row=row)
+        else:
+            self.sprite = items_spritesheet.get_image(frame, 150, 150, 0.5, row=row)
 
         if self.name == "key":
             self.sprite = key_sprite
@@ -93,8 +100,10 @@ class Item:
 
             for i, stat in enumerate(self.stats):
                 if self.type == "item" or self.type == "shop item":
-                    if not (stat == "max_health" and character.max_health >= 8):
+                    if not ((stat == "max_health" and character.max_health >= 8) or (stat == "health" and character.health >= character.max_health)):
                         if stat != "":
+                            if stat == "damage":
+                                stat *= character.damage_multiplier
                             setattr(character, stat, getattr(character, stat) + self.values[i])
                         character.coins -= self.price
                         self.used = True
@@ -129,3 +138,8 @@ class Item:
             #         character.pickup_pickup = True
             #         self.picked = True
             self.effect(character)
+
+    def idToFrame(self, id):
+        frame = int(id/5)
+        row = id - 5*frame
+        return row, frame

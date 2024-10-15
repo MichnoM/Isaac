@@ -11,13 +11,18 @@ window = pygame.display.set_mode((window_width, window_height), pygame.SCALED)
 gui = src.gui.Gui()
 pygame.display.set_caption("Game")
 
+shading = pygame.image.load("sprites/shading.png")
+shading = pygame.transform.scale(shading, (window_width*1.1, window_height*1.15)).convert_alpha()
+shading.set_alpha(240)
+
 clock = pygame.time.Clock()
                 
 def redrawGameWindow():
     background = pygame.Surface((globals.window_width, globals.window_height))
-    background.fill((30,30,30))
-    screen = pygame.Surface((window_width, window_height))
+    background.fill((15,15,15))
+    screen = pygame.Surface((window_width, window_height), pygame.SRCALPHA)
     map.draw(screen)
+    screen.blit(shading, (-60, -55))
     isaac.draw(screen)
     for room in map.rooms:
         for item in room.items:
@@ -46,6 +51,9 @@ if debug_mode:
     isaac.attack_speed = 5
     isaac.luck = 4
     isaac.coins = 50
+    isaac.shot_speed += 0.3
+    isaac.range += 10
+    isaac.size = 2
 
 run = True
 pause = False
@@ -65,7 +73,7 @@ while run:
                     if not room.visited:
                         room.enemiesSpawn(room.number_of_enemies, isaac, map.walls)
                         room.visited = True
-                        
+                    
                     if not room.items_spawned:
                         if room.room_type == "treasure" or room.room_type == "boss":
                             if not room.enemies:
