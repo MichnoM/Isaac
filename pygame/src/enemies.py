@@ -1,1 +1,0 @@
-bosses = ["the haunt", "fistula"]
