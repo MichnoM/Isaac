@@ -42,6 +42,9 @@ class Item:
         self.id = id
         self.centre_x = self.x + self.width//2
         self.centre_y = self.y + self.height//2
+        self.starting_x = self.x
+        self.starting_y = self.y
+        self.direction = -1
 
         self.pickups = ["key", "bomb", "coin", "heart"]
 
@@ -82,6 +85,9 @@ class Item:
             self.y = character.y - character.height//2
             self.centre_x = self.x + self.width//2
             self.centre_y = self.y + self.height//2
+
+        if self.type == "item" and not self.used:
+            self.pedestalMovement()
 
         if self.type == "item" or self.type == "shop item":
             if self.used and not character.pickup_item:
@@ -143,3 +149,10 @@ class Item:
         frame = int(id/5)
         row = id - 5*frame
         return row, frame
+    
+    def pedestalMovement(self):
+        if self.y <= self.starting_y - self.height//4 or self.y >= self.starting_y + self.height//4:
+            self.direction *= -1
+
+        self.y += 0.5 * self.direction
+        print(self.direction, self.starting_y, self.y)

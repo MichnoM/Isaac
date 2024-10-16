@@ -22,7 +22,9 @@ class Player:
         self.size = 2
         self.damage_multiplier = 1
         self.shot_speed = 1
-    
+        self.tear_size = 1
+        self.tear_amount = 1
+
         self.x = x
         self.y = y
         self.width = width * self.size
@@ -66,7 +68,7 @@ class Player:
             body_sprite = isaac_walking_spritesheet.get_image(self.body_frame, 20, 15, scale=self.size)
             head_sprite = isaac_head_spritesheet.get_image(self.head_frame, 30, 27, scale=self.size)
             window.blit(body_sprite, (self.x + self.width//2 - body_sprite.get_width()//2, self.y + head_sprite.get_height() - body_sprite.get_height()//2))
-            window.blit(head_sprite, (self.x, self.y))
+            window.blit(head_sprite, (self.x + self.width//2 - head_sprite.get_width()//2, self.y))
 
         else:
             if self.hurt:
@@ -173,7 +175,7 @@ class Player:
         self.headAnimation(direction)
         self.shootingAnimation(direction)
         if not self.shooting_cooldown:
-            map.createTears(direction, self)
+            map.createTears(direction, self, amount=self.tear_amount)
             self.shooting_cooldown = True
 
     def shootingAnimation(self, direction):

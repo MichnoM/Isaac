@@ -142,26 +142,25 @@ class Room:
         for i in self.enemies_list:
             self.enemies.append(enemy.Enemy(i[0], i[1], i[2], i[3]))
 
-    def itemsSpawn(self, type, character, x=0, y=0, name = None):
+    def itemsSpawn(self, type, character, map, x=0, y=0, name = None):
         if name == None:
             if type == "item" or type == "shop item":
                 if self.placeholder == None:
                     for i in range(self.amount_of_items):
-                        spawned_items = []
                         for item in self.items:
-                            spawned_items.append(item.name)
+                            map.spawned_items.append(item.name)
                         if type == "item":
                             for j in range(100):
                                 random_int = random.randint(0, len(item_list) - 1)
                                 random_item = item_list[random_int]
-                                if random_item[0] not in spawned_items:
+                                if random_item[0] not in map.spawned_items:
                                     break
 
                         if type == "shop item":
                             for j in range(100):
                                 random_int = random.randint(0, len(shop_items) - 1)
                                 random_item = shop_items[random_int]
-                                if random_item[0] not in spawned_items:
+                                if random_item[0] not in map.spawned_items:
                                     break
 
                         if self.room_type == "shop":

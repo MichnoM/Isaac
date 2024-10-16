@@ -2,11 +2,11 @@ import pygame
 from . import spritesheet
 from settings import window_width, window_height
 
-door_sprites = pygame.image.load('sprites/Doors.png')
+door_sprites = pygame.image.load('sprites/doors.png')
 door_spritesheet = spritesheet.SpriteSheet(door_sprites)
-treasure_door = pygame.image.load("sprites/TreasureDoors.png")
+treasure_door = pygame.image.load("sprites/treasureDoors.png")
 treasure_door = pygame.transform.scale(treasure_door, (51*2, 40*2))
-boss_door = pygame.image.load("sprites/BossDoors.png")
+boss_door = pygame.image.load("sprites/bossDoors.png")
 boss_door_spritesheet = spritesheet.SpriteSheet(boss_door)
 
 class Door:

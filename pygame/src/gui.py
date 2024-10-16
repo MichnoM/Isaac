@@ -4,9 +4,9 @@ import globals
 
 _circle_cache = {}
 
-healthbar = pygame.image.load('sprites/HealthBar.png')
-healthbar_empty = pygame.image.load('sprites/HealthBarEmpty.png')
-pickups = pygame.image.load('sprites/pickups_gui.png')
+healthbar = pygame.image.load('sprites/healthBar.png')
+healthbar_empty = pygame.image.load('sprites/healthBarEmpty.png')
+pickups = pygame.image.load('sprites/pickupsGui.png')
 
 healthbar = pygame.transform.scale(healthbar, (360, 45))
 healthbar_empty = pygame.transform.scale(healthbar_empty, (360, 45))

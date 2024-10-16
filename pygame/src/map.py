@@ -6,7 +6,7 @@ from . import projectile
 from settings import window_width, window_height
 import globals
 
-background = pygame.image.load('sprites/Background.png')
+background = pygame.image.load('sprites/background.png')
 
 class Map:
     def __init__(self, width, height, wall_thickness = 40):
@@ -23,6 +23,7 @@ class Map:
         self.current_room = None
         self.room_change = False
         self.cooldown = 0
+        self.spawned_items = []
 
         self.mapLayout()
         self.roomCreation()
@@ -245,8 +246,39 @@ class Map:
             self.room_change = True
             self.x += 200
 
-    def createTears(self, direction, character):
-        self.current_room.tears.append(projectile.Projectile(round(character.x + character.width//2), round(character.y + character.height//2), 10, (0,0,0), direction))
+    def createTears(self, direction, character, type="friendly", amount=1):
+        if direction == "down":
+            direction2 = [[-0.25, 1], [0, 1], [0.25, 1]]
+        if direction == "up":
+            direction2 = [[-0.25, -1], [0, -1], [0.25, -1]]
+        if direction == "left":
+            direction2 = [[-1, -0.25], [-1, 0], [-1, 0.25]]
+        if direction == "right":
+            direction2 = [[1, -0.25], [1, 0], [1, 0.25]]
+
+        for i in range(amount):
+            x = character.x + character.width//2
+            y = character.y + character.height//2
+            if direction == "up" or direction == "down":
+                if amount == 1:
+                    x = character.x + character.width//2
+                if amount == 2:
+                    x = character.x + character.width//4 + i*30
+                if amount == 3:
+                    x = character.x + i*30
+
+            if direction == "left" or direction == "right":
+                if amount == 1:
+                    y = character.y + character.height//2
+                if amount == 2:
+                    y = character.y + character.height//4 + i*30
+                if amount == 3:
+                    y = character.y + i*30
+                    
+            if amount != 3:
+                self.current_room.tears.append(projectile.Projectile(x, y, 10, (0,0,0), direction, type, character))
+            else:
+                self.current_room.tears.append(projectile.Projectile(x, y, 10, (0,0,0), direction2[i], type, character))
 
     def checkDoorframeCollision(character, room):
         pass

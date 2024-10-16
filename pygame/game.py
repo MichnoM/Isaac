@@ -11,7 +11,7 @@ window = pygame.display.set_mode((window_width, window_height), pygame.SCALED)
 gui = src.gui.Gui()
 pygame.display.set_caption("Game")
 
-shading = pygame.image.load("sprites/shading.png")
+shading = pygame.image.load("sprites/shade.png")
 shading = pygame.transform.scale(shading, (window_width*1.1, window_height*1.15)).convert_alpha()
 shading.set_alpha(240)
 
@@ -20,7 +20,7 @@ clock = pygame.time.Clock()
 def redrawGameWindow():
     background = pygame.Surface((globals.window_width, globals.window_height))
     background.fill((15,15,15))
-    screen = pygame.Surface((window_width, window_height), pygame.SRCALPHA)
+    screen = pygame.Surface((window_width, window_height))
     map.draw(screen)
     screen.blit(shading, (-60, -55))
     isaac.draw(screen)
@@ -52,7 +52,7 @@ if debug_mode:
     isaac.luck = 4
     isaac.coins = 50
     isaac.shot_speed += 0.3
-    isaac.range += 10
+    isaac.range = 10
     isaac.size = 2
 
 run = True
@@ -77,12 +77,12 @@ while run:
                     if not room.items_spawned:
                         if room.room_type == "treasure" or room.room_type == "boss":
                             if not room.enemies:
-                                room.itemsSpawn("item", isaac)
+                                room.itemsSpawn("item", isaac, map)
                         else:
-                            room.itemsSpawn("shop item", isaac)
+                            room.itemsSpawn("shop item", isaac, map)
 
                     if (not room.pickups_spawned) and not room.enemies and room.room_type == "regular" and not room.spawn_room:
-                        room.itemsSpawn("pickup", isaac)
+                        room.itemsSpawn("pickup", isaac, map)
                     
                     for item in room.items:
                         if map.checkCollision(isaac, item):

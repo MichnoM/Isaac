@@ -5,7 +5,7 @@ from . import spritesheet
 fistula_sprites = pygame.image.load("sprites/fistula.png")
 fistula_spritesheet = spritesheet.SpriteSheet(fistula_sprites)
 
-haunt_sprites = pygame.image.load("sprites/the haunt.png")
+haunt_sprites = pygame.image.load("sprites/theHaunt.png")
 haunt_spritesheet = spritesheet.SpriteSheet(haunt_sprites)
 
 class Enemy:
@@ -29,7 +29,16 @@ class Enemy:
         self.row = 0
         self.frame_duration = 60
         self.shooting = False
+        self.shooting_direction = None
+        self.shooting_cooldown = 1000
+        self.range = 20
+        self.shot_speed = 1
+        self.tear_size = 1
         self.last_update_time = pygame.time.get_ticks()
+        self.last_shot = pygame.time.get_ticks()
+        self.transformation = False
+        self.invincible = False
+        self.angle = 0
         self.statsAssign()
 
     def draw(self, window):
@@ -51,13 +60,18 @@ class Enemy:
                 if frame == 2:
                     sprite = sprite.subsurface(21, 19, 34, 31)
 
+                self.angle -= 0.5
+                if self.angle == 0:
+                    self.angle = 360
+
                 sprite = pygame.transform.scale(sprite, (self.width, self.height)).convert_alpha()
+                sprite = pygame.transform.rotate(sprite, self.angle).convert_alpha()
 
             if self.name == "the haunt":
                 sprite = haunt_spritesheet.get_image(self.frame, 84, 79, scale=3, row=self.row)
             
             window.blit(sprite, (self.x + self.width//2 - sprite.get_width()//2, self.y + self.height//2 - sprite.get_height()//2))
-            pygame.draw.rect(window, (255, 0, 0), (self.x, self.y, self.width, self.height), 1)
+            # pygame.draw.rect(window, (255, 0, 0), (self.x, self.y, self.width, self.height), 1)
 
     def update(self, character, map):
         current_time = pygame.time.get_ticks()
@@ -69,6 +83,9 @@ class Enemy:
             if map.checkCollision(character, self):
                 if not character.damage_taken_cooldown:
                     character.hit()
+
+        if self.shooting and current_time - self.last_shot >= 500:
+            self.shooting = False
 
         self.bossBehaviour(current_time, map)
 
@@ -103,16 +120,19 @@ class Enemy:
 
                 else:
                     x_block, y_block = self.boundaryBlock(boundary, mode="x")
-                    if self.y > 10:
-                        self.stage = 2
+
+                    if self.stage == 2:
                         self.y -= 4
-                    else:
-                        self.stage = 3
-                        self.y = 10
+
+                    if self.stage == 3:
                         if x_block:
                             self.direction_x *= -1
 
                         self.x += self.speed_x * self.direction_x
+
+    def shoot(self, map, direction, amount):
+        map.createTears(direction, self, type="hostile", amount=amount)
+        self.shooting = True
 
     def boundaryBlock(self, boundary, mode=None):
         x = False
@@ -150,6 +170,10 @@ class Enemy:
                 self.speed_x = 1
                 self.speed_y = 1
                 self.health = 200
+                self.shot_speed = 2
+                self.tear_size = 1.5
+                self.shooting_cooldown = 5000
+
             if self.name == "fistula":
                 if self.stage == 1:
                     self.width = 250
@@ -164,16 +188,23 @@ class Enemy:
 
     def bossBehaviour(self, current_time, map):
         if self.name == "the haunt":
+            self.shooting_direction = "down"
             if self.health <= 100:
                 if self.stage == 1:
                     self.stage = 2
                     self.speed_x = 6
+
+            if self.y < 10 and self.stage == 2:
+                self.stage = 3
+                self.y = 10
 
             if self.stage == 1:
                 self.row = 0
                 frames = [0, 1, 2]
 
             if self.stage == 2:
+                self.transformation = True
+                self.invincible = True
                 self.row = 0
                 frames = [3, 4]
                     
@@ -183,17 +214,31 @@ class Enemy:
                     self.frame = 0
                 frames = [0, 1, 2, 3, 4]
                 if self.row == 3:
-                    frames = [0]
+                    self.transformation = False
+                    self.invincible = False
+                    if not self.shooting:
+                        frames = [0]
+                    else:
+                        frames = [1, 2, 3]
 
             if current_time - self.last_update_time >= self.frame_duration:
                 if self.frame < frames[-1]:
                     self.frame += 1
                 else:
-                    self.frame = frames[0]
-                    if self.row == 1 or self.row == 2:
-                        self.row += 1
+                    if not self.shooting:
+                        self.frame = frames[0]
+                        if self.row == 1 or self.row == 2:
+                            self.row += 1
+                            if self.row == 2:
+                                self.last_shot = current_time
 
                 self.last_update_time = current_time
+
+            if self.stage == 3:
+                if current_time - self.last_shot >= self.shooting_cooldown and not self.transformation:
+                    self.shoot(map, "down", 3)
+                    self.last_shot = current_time
+                    self.shooting_cooldown = random.randint(3000, 8000)
 
         if self.name == "fistula":
             if self.dead:
