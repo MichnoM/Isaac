@@ -124,17 +124,19 @@ class Room:
         if len(self.enemies_list) == 0:
             if self.room_type == "regular":
                 for i in range(number_of_enemies):
+                    name = "gaper"
                     for j in range(100):
                         spawn_x = random.randint(boundaries[0].width + 100, boundaries[1].x - 100)
                         spawn_y = random.randint(boundaries[2].height + 100, boundaries[3].y - 100)
                         if spawn_x not in range(character.x - 100, character.x + 100) or spawn_y not in range(character.y - 100, character.y + 100):
                             break
 
-                    self.enemies_list.append((spawn_x, spawn_y, "regular", None))
+                    self.enemies_list.append((spawn_x, spawn_y, "regular", name))
 
             if self.room_type == "boss":
                 random_index = random.randint(0, len(bosses) - 1)
                 name = bosses[random_index]
+                name = "the haunt"
                 spawn_x = window_width//2
                 spawn_y = window_height//2
                 self.enemies_list.append((spawn_x, spawn_y, "boss", name))

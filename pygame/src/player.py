@@ -11,7 +11,7 @@ isaac_walking_spritesheet = spritesheet.SpriteSheet(isaac_walking_sprites)
 isaac_head_spritesheet = spritesheet.SpriteSheet(isaac_head_sprites)
 
 class Player:
-    def __init__(self, x, y, width=30, height=36):
+    def __init__(self, x, y, width=32, height=32):
         self.health = 5
         self.max_health = 5
         self.speed = 5
@@ -31,6 +31,7 @@ class Player:
         self.height = height * self.size
         self.x -= self.width//2
         self.y -= self.height//2
+        self.previous_size = self.size
 
         self.bombs = 0
         self.keys = 0
@@ -65,19 +66,24 @@ class Player:
 
     def draw(self, window):
         if not (self.hurt or self.dead or self.pickup_item):
-            body_sprite = isaac_walking_spritesheet.get_image(self.body_frame, 20, 15, scale=self.size)
-            head_sprite = isaac_head_spritesheet.get_image(self.head_frame, 30, 27, scale=self.size)
-            window.blit(body_sprite, (self.x + self.width//2 - body_sprite.get_width()//2, self.y + head_sprite.get_height() - body_sprite.get_height()//2))
-            window.blit(head_sprite, (self.x + self.width//2 - head_sprite.get_width()//2, self.y))
+            body_sprite = isaac_walking_spritesheet.get_image(self.body_frame, 32, 32, scale=self.size)
+            head_sprite = isaac_head_spritesheet.get_image(self.head_frame, 32, 32, scale=self.size)
+            window.blit(body_sprite, (self.x + self.width//2 - body_sprite.get_width()//2, self.y + self.height//2 - body_sprite.get_height()//6))
+            window.blit(head_sprite, (self.x + self.width//2 - head_sprite.get_width()//2, self.y - head_sprite.get_height()//10))
 
         else:
             if self.hurt:
                 hurt_sprite = isaac_hurt_spritesheet.get_image(1, 36, 33, scale=self.size)
+
             if self.dead:
                 hurt_sprite = isaac_hurt_spritesheet.get_image(2, 36, 33, scale=self.size)
+
             if self.pickup_item or self.pickup_pickup:
                 hurt_sprite = isaac_hurt_spritesheet.get_image(3, 36, 33, scale=self.size)
+
             window.blit(hurt_sprite, (self.x, self.y))
+
+        # pygame.draw.rect(window, (0, 0, 255), (self.x, self.y, self.width, self.height), 1)
 
     def update(self):
         self.left_side = pygame.Rect(self.x, self.y+self.height//2-1, self.width//2, 2)
@@ -105,6 +111,17 @@ class Player:
             self.damage_taken_cooldown = True
 
     def bodyAnimation(self, direction):
+        if type(direction) == "tuple":
+            if direction[0] == -1 and (direction[1] <= 1 or direction[0] >= -1):
+                direction = "left"
+            if direction[0] == 1 and (direction[1] <= 1 or direction[0] >= -1):
+                direction = "right"
+            if direction[1] == -1 and (direction[0] <= 1 or direction[0] >= -1):
+                direction = "up"
+            if direction[1] == 1 and (direction[0] <= 1 or direction[0] >= -1):
+                direction = "down"
+            
+
         if direction == "left":
             if self.body_frame <= 19:
                 self.body_frame = 20

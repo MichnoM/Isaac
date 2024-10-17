@@ -1,9 +1,9 @@
 import pygame
 from . import spritesheet
 
-tear_sprites = pygame.image.load('sprites/tear.png')
+tears_sprites = pygame.image.load('sprites/tears.png')
 
-tear_spritesheet = spritesheet.SpriteSheet(tear_sprites)
+tear_spritesheet = spritesheet.SpriteSheet(tears_sprites)
 
 class Projectile:
     def __init__(self, x, y, radius, colour, direction, type="friendly", character=None):
@@ -25,13 +25,16 @@ class Projectile:
         self.type = type
         self.character = character
         self.size = character.tear_size
+        self.animation = False
+        self.frame = 0
         self.directionConverter(self.direction)
 
     def draw(self, window):
         if self.type == "friendly":
-            sprite = tear_spritesheet.get_image(0, 130, 130, 0.2*self.size)
+            sprite = tear_spritesheet.get_image(self.frame, 64, 64, 1.5*self.size, row=0)
+
         else:
-            sprite = tear_spritesheet.get_image(1, 130, 130, 0.2*self.size)
+            sprite = tear_spritesheet.get_image(self.frame, 64, 64, 1.5*self.size, row=1)
         
         window.blit(sprite, (self.x - round(sprite.get_width()//2), self.y - round(sprite.get_height()//2)))
 
@@ -39,13 +42,21 @@ class Projectile:
         if not self.updated:
             self.speed *= self.character.shot_speed
             self.updated = True
-        self.move(self.character.range)
+        
+        if not self.animation:
+            self.move(self.character.range)
+        
         if map.checkCollision(self, map.walls):
             self.pop = True
+
         if self.pop:
-            for room in map.rooms:
-                if self in room.tears:
-                    room.tears.remove(self)
+            self.animation = True
+            self.popAnimation(15)
+            if self.animation == False:
+                for room in map.rooms:
+                    if self in room.tears:
+                        room.tears.remove(self)
+
         for enemy in map.current_room.enemies:
             if map.checkCollision(self, enemy) and self.type == "friendly" and not enemy.invincible:
                 if not self.did_hit:
@@ -89,3 +100,9 @@ class Projectile:
             self.direction = [-1, 0]
         if direction == "right":
             self.direction = [1, 0]
+
+    def popAnimation(self, frames):
+        self.frame += 1
+            
+        if self.frame == frames + 1:
+            self.animation = False

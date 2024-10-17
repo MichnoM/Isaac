@@ -1,5 +1,6 @@
 import pygame
 from settings import debug_mode
+from . import spritesheet
 import globals
 
 _circle_cache = {}
@@ -7,6 +8,8 @@ _circle_cache = {}
 healthbar = pygame.image.load('sprites/healthBar.png')
 healthbar_empty = pygame.image.load('sprites/healthBarEmpty.png')
 pickups = pygame.image.load('sprites/pickupsGui.png')
+boss_healthbar_sprite = pygame.image.load("sprites/bossHealthBar.png")
+boss_healthbar_spritesheet = spritesheet.SpriteSheet(boss_healthbar_sprite)
 
 healthbar = pygame.transform.scale(healthbar, (360, 45))
 healthbar_empty = pygame.transform.scale(healthbar_empty, (360, 45))
@@ -20,12 +23,14 @@ class Gui:
     def __init__(self):
         self.width = globals.window_width
         self.height = globals.window_height
+        self.last_healthbar_frame = pygame.time.get_ticks()
 
-    def draw(self, window, character, pause):
+    def draw(self, window, character, pause, map):
         gui = pygame.Surface((self.width, self.height))
         gui.fill((1, 1, 1))
         gui.set_colorkey((1, 1, 1))
         self.drawHealthbar(window, character)
+        self.drawBossHealthBar(window, map.current_room.enemies)
         gui.blit(pickups, (0, 100))
         gui.blit(self.render(f"{character.coins}", font), (60*0.75, 103))
         gui.blit(self.render(f"{character.bombs}", font), (60*0.75, 153))
@@ -33,8 +38,6 @@ class Gui:
         # if debug_mode:
         #     pygame.draw.line(gui, (0, 0, 255), (self.width//2, self.height), (self.width//2, 0))
         #     pygame.draw.line(gui, (0, 0, 255), (0, self.height//2), (self.width, self.height//2))
-            # for side in character.sides:
-            #     pygame.draw.rect(gui, (100, 100, 100), side)
 
         if pause:
             label = font.render(f"Damage: {character.damage}, Attack Speed: {character.attack_speed}, Speed: {character.speed}", 1, (255, 255, 255))
@@ -49,6 +52,32 @@ class Gui:
     def drawHealthbar(self, window, character):
         window.blit(healthbar_empty, (-360 + 45 * character.max_health, 10))
         window.blit(healthbar, (-360 + 45 * character.health, 10))
+
+    def drawBossHealthBar(self, window, enemies):
+        current_time = pygame.time.get_ticks()
+        for enemy in enemies:
+            if enemy.type == "boss":
+                scale = 3
+                ratio = enemy.health / enemy.max_health
+                
+                sprite = boss_healthbar_spritesheet.get_image(0, 132, 32, scale, row=1)
+                current_health = boss_healthbar_spritesheet.get_image(0, 132, 32, 3)
+                current_health = current_health.subsurface(18*scale, 0, 110*scale * ratio, 32*scale)
+
+                colour_image = pygame.Surface(current_health.get_size()).convert_alpha()
+                if not enemy.hurt:
+                    colour_image.fill((255, 0, 0))
+                else:
+                    colour_image.fill((200, 0, 0))
+                    if current_time - self.last_healthbar_frame >= 40:
+                        colour_image.fill((255, 0, 0))
+                        self.last_healthbar_frame = current_time
+                current_health.blit(colour_image, (0,0), special_flags=pygame.BLEND_RGBA_MULT)
+
+                # current_health = current_health.subsurface((0, 0, current_health.get_width() * ratio, current_health.get_height()))
+
+                window.blit(sprite, (self.width//2 - sprite.get_width()//2, self.height - self.height//8))
+                window.blit(current_health, (self.width//2 - sprite.get_width()//2 + 18*scale, self.height - self.height//8))
 
     def update(self):
         self.width = globals.window_width

@@ -5,6 +5,12 @@ from . import spritesheet
 fistula_sprites = pygame.image.load("sprites/fistula.png")
 fistula_spritesheet = spritesheet.SpriteSheet(fistula_sprites)
 
+body_walking_sprites = pygame.image.load('sprites/isaacWalking.png')
+gaper_head_sprites = pygame.image.load('sprites/gaperHead.png')
+
+body_walking_spritesheet = spritesheet.SpriteSheet(body_walking_sprites)
+gaper_head_spritesheet = spritesheet.SpriteSheet(gaper_head_sprites)
+
 haunt_sprites = pygame.image.load("sprites/theHaunt.png")
 haunt_spritesheet = spritesheet.SpriteSheet(haunt_sprites)
 
@@ -20,12 +26,15 @@ class Enemy:
         self.direction = [-1, 1]
         self.direction_x = self.direction[random.randint(0, 1)]
         self.direction_y = self.direction[random.randint(0, 1)]
-        self.health = 10
+        self.max_health = 10
+        self.health = self.max_health
         self.cooldown_tracker = 0
         self.dead = False
         self.name = name
         self.stage = stage
         self.frame = 0
+        self.body_frame = 0
+        self.head_frame = 0
         self.row = 0
         self.frame_duration = 60
         self.shooting = False
@@ -36,14 +45,27 @@ class Enemy:
         self.tear_size = 1
         self.last_update_time = pygame.time.get_ticks()
         self.last_shot = pygame.time.get_ticks()
+        self.last_hit = pygame.time.get_ticks()
+        self.last_wobble_tick = pygame.time.get_ticks()
+        self.last_body_animation = pygame.time.get_ticks()
         self.transformation = False
         self.invincible = False
         self.angle = 0
+        self.hurt = False
+        self.counter = 0
+        self.flip = 1
+        self.death_animation = False
+        self.death_animation_duration = 0
         self.statsAssign()
 
     def draw(self, window):
         if self.type == "regular":
-            pygame.draw.rect(window, (0, 255, 0), (self.x, self.y, self.width, self.height))
+            if self.name == "gaper":
+                sprite = body_walking_spritesheet.get_image(self.body_frame, 32, 32, scale=2)
+                head_sprite = gaper_head_spritesheet.get_image(1, 32, 32, scale=2)
+                sprite.blit(head_sprite, (self.x + self.width//2 - head_sprite.get_width()//2, self.y - head_sprite.get_height()//10))
+
+            # pygame.draw.rect(window, (255, 0, 0), (self.x, self.y, self.width, self.height), 1)
 
         if self.type == "boss":
             if self.name == "fistula":
@@ -69,15 +91,25 @@ class Enemy:
 
             if self.name == "the haunt":
                 sprite = haunt_spritesheet.get_image(self.frame, 84, 79, scale=3, row=self.row)
+                if not self.stage == 2:
+                    sprite = self.spriteWobble(sprite)
             
-            window.blit(sprite, (self.x + self.width//2 - sprite.get_width()//2, self.y + self.height//2 - sprite.get_height()//2))
-            # pygame.draw.rect(window, (255, 0, 0), (self.x, self.y, self.width, self.height), 1)
+        if self.hurt:
+            colour_image = pygame.Surface(sprite.get_size()).convert_alpha()
+            colour_image.fill((255, 120, 120))
+            sprite.blit(colour_image, (0,0), special_flags=pygame.BLEND_RGBA_MULT)
+        
+        window.blit(sprite, (self.x + self.width//2 - sprite.get_width()//2, self.y + self.height//2 - sprite.get_height()//2))
+        # pygame.draw.rect(window, (255, 0, 0), (self.x, self.y, self.width, self.height), 1)
 
     def update(self, character, map):
         current_time = pygame.time.get_ticks()
-        self.move(map.walls)
+        if not self.dead:
+            self.move(map)
+
         if self.dead:
-            map.current_room.enemies.remove(self)
+            if not self.death_animation:
+                map.current_room.enemies.remove(self)
 
         if not character.dead:
             if map.checkCollision(character, self):
@@ -87,26 +119,38 @@ class Enemy:
         if self.shooting and current_time - self.last_shot >= 500:
             self.shooting = False
 
+        if self.hurt and current_time - self.last_hit >= 100:
+            self.hurt = False
+        
+        if self.death_animation and current_time - self.last_hit >= self.death_animation_duration:
+            self.death_animation = False
+
         self.bossBehaviour(current_time, map)
+        self.enemyBehaviour(current_time)
 
-    def move(self, boundary):
-        if self.type == "regular" or self.name == "fistula":
-            x_block, y_block = self.boundaryBlock(boundary)
-            if x_block == True:
-                self.direction_x *= -1
-                self.speed_x = random.randint(1, 4)
+    def move(self, map):
+        if self.type == "regular":
+            if self.name == "gaper":
+                x_block, y_block = self.boundaryBlock(map.walls)
+                delta_x = map.player_coordinates[0] - self.x
+                delta_y = map.player_coordinates[1] - self.y
 
-            if y_block == True:
-                self.direction_y *= -1
-                self.speed_y = random.randint(1, 4)
+                distance = (delta_x**2 + delta_y**2)**(1/2)
 
-            self.x += self.speed_x * self.direction_x
-            self.y += self.speed_y * self.direction_y
+                if distance != 0:
+                    self.direction_x = delta_x / distance
+                    self.direction_y = delta_y / distance
+                else:
+                    self.direction_x = 0
+                    self.direction_y = 0
+
+                self.x += self.speed_x * self.direction_x
+                self.y += self.speed_y * self.direction_y
 
         if self.type == "boss":
             if self.name == "the haunt":
                 if self.stage == 1:
-                    self.boundaryBlock(boundary)
+                    self.boundaryBlock(map.walls)
 
                     random_int = random.randint(1, 100)
                     if random_int == 1:
@@ -119,7 +163,7 @@ class Enemy:
                     self.y += self.speed_y * self.direction_y
 
                 else:
-                    x_block, y_block = self.boundaryBlock(boundary, mode="x")
+                    x_block, y_block = self.boundaryBlock(map.walls, mode="x")
 
                     if self.stage == 2:
                         self.y -= 4
@@ -129,6 +173,19 @@ class Enemy:
                             self.direction_x *= -1
 
                         self.x += self.speed_x * self.direction_x
+
+            if self.name == "fistula":
+                x_block, y_block = self.boundaryBlock(map.walls)
+                if x_block == True:
+                    self.direction_x *= -1
+                    self.speed_x = random.randint(1, 4)
+
+                if y_block == True:
+                    self.direction_y *= -1
+                    self.speed_y = random.randint(1, 4)
+
+                self.x += self.speed_x * self.direction_x
+                self.y += self.speed_y * self.direction_y
 
     def shoot(self, map, direction, amount):
         map.createTears(direction, self, type="hostile", amount=amount)
@@ -157,10 +214,14 @@ class Enemy:
         return x, y
 
     def hit(self, damage):
-        if self.health > 0:
-            self.health -= 1 * damage
-            if self.health <= 0:
-                self.dead = True
+        if not self.dead:
+            self.hurt = True
+            self.last_hit = pygame.time.get_ticks()
+            if self.health > 0:
+                self.health -= 1 * damage
+                if self.health <= 0:
+                    self.dead = True
+                    self.death_animation = True
 
     def statsAssign(self):
         if self.type == "boss":
@@ -169,22 +230,31 @@ class Enemy:
                 self.height = 200
                 self.speed_x = 1
                 self.speed_y = 1
-                self.health = 200
+                self.max_health = 200
+                self.health = self.max_health
                 self.shot_speed = 2
                 self.tear_size = 1.5
                 self.shooting_cooldown = 5000
+                self.death_animation_duration = 2000
 
             if self.name == "fistula":
                 if self.stage == 1:
                     self.width = 250
                     self.height = 250
                 self.speed_x = 5
-                self.health == 22
+                self.max_health = 22
+                self.health == self.max_health
             self.x -= self.width//2
             self.y -= self.height//2
-        else:
-            self.width = 50
-            self.height = 50
+        
+        if self.type == "regular":
+            if self.name == "gaper":
+                self.width = 64
+                self.height = 64
+
+            else:
+                self.width = 50
+                self.height = 50
 
     def bossBehaviour(self, current_time, map):
         if self.name == "the haunt":
@@ -235,10 +305,14 @@ class Enemy:
                 self.last_update_time = current_time
 
             if self.stage == 3:
-                if current_time - self.last_shot >= self.shooting_cooldown and not self.transformation:
+                if current_time - self.last_shot >= self.shooting_cooldown and not self.transformation and not self.dead:
                     self.shoot(map, "down", 3)
                     self.last_shot = current_time
                     self.shooting_cooldown = random.randint(3000, 8000)
+
+            if self.dead:
+                self.row = 3
+                self.frame = 4
 
         if self.name == "fistula":
             if self.dead:
@@ -250,3 +324,57 @@ class Enemy:
                     amount_of_splits = 0
                 for i in range(amount_of_splits):
                     map.current_room.enemies.append(Enemy(self.x - 25 + i*50, self.y, type="boss", name="fistula", width=self.width-100//self.stage, height=self.height-100//self.stage, stage=self.stage + 1))
+
+    def spriteWobble(self, sprite):
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.last_wobble_tick >= 50:
+            self.counter += 1 * self.flip
+            self.last_wobble_tick = current_time
+
+            if self.counter >= 4 or self.counter <= 0:
+                self.flip *= -1
+
+        sprite = pygame.transform.scale(sprite, (sprite.get_width() + 10*self.counter/4, sprite.get_height() - 10*self.counter/4)).convert_alpha()
+        return sprite
+    
+    def enemyBehaviour(self, current_time):
+        if self.type == "regular":
+            if self.name == "gaper":
+                if abs(self.direction_x) > abs(self.direction_y):
+                    if self.direction_x < 0:
+                        direction = "left"
+                    if self.direction_x > 0:
+                        direction = "right"
+
+                else:
+                    if self.direction_y > 0:
+                        direction = "down"
+                    if self.direction_y < 0:
+                        direction = "up"
+
+                self.bodyAnimation(direction, current_time)
+
+    def bodyAnimation(self, direction, current_time):
+        if current_time - self.last_body_animation > 100:
+            self.body_frame += 1
+            self.last_body_animation = current_time
+
+        if direction == "left":
+            if self.body_frame <= 19:
+                self.body_frame = 20
+
+            if self.body_frame > 29:
+                self.body_frame = 20
+
+        if direction == "right":
+            if self.body_frame <= 9:
+                self.body_frame = 10
+
+            if self.body_frame > 19:
+                self.body_frame = 10
+
+        if direction == "up" or direction == "down":
+            if self.body_frame > 9:
+                self.body_frame = 0
+

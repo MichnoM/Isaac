@@ -35,7 +35,7 @@ def redrawGameWindow():
             tear.draw(screen)
     window.blit(background, (0, 0))
     window.blit(screen, (map.x, map.y))
-    gui.draw(window, isaac, pause)
+    gui.draw(window, isaac, pause, map)
 
     pygame.display.update()
 
@@ -46,7 +46,7 @@ isaac = src.player.Player(window_width//2, window_height//2)
 event_handler = eventHandler.eventHandler(map, isaac, window, monitor_size)
 
 if debug_mode:
-    isaac.damage = 10
+    isaac.damage = 1
     isaac.speed = 15
     isaac.attack_speed = 5
     isaac.luck = 4

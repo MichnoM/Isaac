@@ -21,6 +21,7 @@ class Map:
         self.number_of_rooms = 10
         self.current_room_index = [5, 5]
         self.current_room = None
+        self.player_coordinates = []
         self.room_change = False
         self.cooldown = 0
         self.spawned_items = []
@@ -68,8 +69,10 @@ class Map:
         self.upper_wall = pygame.Rect(0, 0, self.width, self.wall_thickness)
         self.bottom_wall = pygame.Rect(0, self.height - self.wall_thickness-20, self.width, self.wall_thickness+20)
         self.walls = [self.left_wall, self.right_wall, self.upper_wall, self.bottom_wall]
+        self.player_coordinates = [character.x, character.y]
 
         self.roomChange(character)
+
         for room in self.rooms:
             if room.room_index == self.current_room_index:
                 self.current_room = room
