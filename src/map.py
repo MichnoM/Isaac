@@ -240,18 +240,21 @@ class Map:
             self.current_room_index[0] -= 1
             self.room_change = True
             self.y += 200
+
         if character.x >= self.width:
             character.x = 100 - character.width//2
             character.y = self.height//2 - character.height//2
             self.current_room_index[1] += 1
             self.room_change = True
             self.x += -200
+
         if character.y >= self.height:
             character.x = self.width//2 - character.width//2
             character.y = 100 - character.height//2
             self.current_room_index[0] += 1
             self.room_change = True
             self.y += -200
+
         if character.x <= 0:
             character.x = self.width - 100
             character.y = self.height//2 - character.height//2
@@ -303,9 +306,6 @@ class Map:
                 self.current_room.tears.append(projectile.Projectile(x, y, 10, (0,0,0), direction, type, character))
             else:
                 self.current_room.tears.append(projectile.Projectile(x, y, 10, (0,0,0), direction2[i], type, character))
-
-    def checkDoorframeCollision(character, room):
-        pass
 
     def itemEffects(self, item, character):
         if item.name == "piggy bank":

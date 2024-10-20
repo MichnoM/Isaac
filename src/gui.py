@@ -130,8 +130,9 @@ class Gui:
                                 self.last_healthbar_frame = current_time
                         current_health.blit(colour_image, (0,0), special_flags=pygame.BLEND_RGBA_MULT)
 
-                        window.blit(sprite, (self.width//2 - sprite.get_width()//2, self.height - self.height//8))
-                        window.blit(current_health, (self.width//2 - sprite.get_width()//2 + 18*scale, self.height - self.height//8))
+                        sprite.blit(current_health, (18*scale, 0))
+
+                        window.blit(sprite, (globals.window_width//2 - sprite.get_width()//2, globals.window_height - self.height//8))
 
     def drawItemDescription(self, window, character):
         if character.pickup_item:
