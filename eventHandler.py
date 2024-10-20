@@ -33,7 +33,6 @@ class eventHandler:
         self.pickup_pickup_check = False
 
     def eventHandling(self):
-        print(self.current_button)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.run = False
