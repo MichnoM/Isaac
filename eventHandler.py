@@ -12,15 +12,18 @@ pickup_pickup_event = pygame.USEREVENT + 7
 room_change_event = pygame.USEREVENT + 8
 
 class eventHandler:
-    def __init__(self, map, character, window, monitor_size, background):
+    def __init__(self, map, character, window, monitor_size, background, menu):
         self.map = map
         self.character = character
         self.run = True
         self.pause = False
+        self.main_menu = True
         self.window = window
         self.monitor_size = monitor_size
         self.fullscreen = False
         self.background = background
+        self.title_menu = menu
+        self.menu = self.title_menu
         self.current_button = 1
 
         self.map_change_check = False
@@ -64,6 +67,13 @@ class eventHandler:
                             self.pause = not self.pause
                         if self.current_button == 2:
                             self.run = False
+
+                    if self.main_menu:
+                        self.main_menu = not self.main_menu
+
+                if event.key == pygame.K_SPACE:
+                    if self.main_menu:
+                        self.main_menu = not self.main_menu
                             
                 if event.key == pygame.K_f:
                     self.fullscreen = not self.fullscreen
@@ -72,11 +82,13 @@ class eventHandler:
                         globals.window_width = self.window.get_width()
                         globals.window_height = self.window.get_height()
                         self.background = pygame.transform.scale(self.background, (globals.window_width, globals.window_height))
+                        self.menu = pygame.transform.smoothscale(self.title_menu.copy(), (globals.window_width, globals.window_height))
                     else:
                         self.window = pygame.display.set_mode((window_width, window_height), pygame.SCALED)
                         globals.window_width = self.window.get_width()
                         globals.window_height = self.window.get_height()
                         self.background = pygame.transform.scale(self.background, (globals.window_width, globals.window_height))
+                        self.menu = pygame.transform.smoothscale(self.title_menu.copy(), (globals.window_width, globals.window_height))
 
             if event.type == cooldown_event:
                 self.character.shooting_cooldown = False
@@ -160,4 +172,4 @@ class eventHandler:
                     pygame.time.set_timer(room_change_event, 400)
                     self.map_change_check = True
 
-        return self.run, self.pause, self.window, self.background, self.current_button
+        return self.run, self.pause, self.window, self.background, self.current_button, self.main_menu, self.menu

@@ -17,30 +17,36 @@ shading = pygame.image.load("sprites/shade.png")
 shading = pygame.transform.scale(shading, (window_width*1.1, window_height*1.15)).convert_alpha()
 shading.set_alpha(240)
 
+title_menu = pygame.image.load("sprites/ui/titleMenu.png")
+title_menu = pygame.transform.scale(title_menu, (globals.window_width, globals.window_height)).convert_alpha()
+
 background = pygame.Surface((globals.window_width, globals.window_height), pygame.SRCALPHA)
 screen = pygame.Surface((window_width, window_height), pygame.SRCALPHA)
 
 clock = pygame.time.Clock()
                 
 def redrawGameWindow():
-    window.blit(background, (0, 0))
-    map.draw(screen)
-    screen.blit(shading, (-60, -55))
-    isaac.draw(screen)
-    for room in map.rooms:
-        for item in room.items:
-            item.draw(screen)
-        for pickup in room.pickups:
-            pickup.draw(screen)
-        for enemy in room.enemies:
-            enemy.draw(screen)
-        for tear in room.tears:
-            tear.draw(screen)
-    background.fill((15,15,15))
-    window.blit(screen, (map.x, map.y))
-    gui.draw(window, isaac, pause, map, current_button)
-    # fps = gui.render(f"{round(clock.get_fps())}", font)
-    # window.blit(fps, (globals.window_width - 50, 0))
+    if not main_menu:
+        window.blit(background, (0, 0))
+        map.draw(screen)
+        screen.blit(shading, (-60, -55))
+        isaac.draw(screen)
+        for room in map.rooms:
+            for item in room.items:
+                item.draw(screen)
+            for pickup in room.pickups:
+                pickup.draw(screen)
+            for enemy in room.enemies:
+                enemy.draw(screen)
+            for tear in room.tears:
+                tear.draw(screen)
+        background.fill((15,15,15))
+        window.blit(screen, (map.x, map.y))
+        gui.draw(window, isaac, pause, map, current_button)
+        # fps = gui.render(f"{round(clock.get_fps())}", font)
+        # window.blit(fps, (globals.window_width - 50, 0))
+    else:
+        window.blit(title_menu, (0, 0))
 
     pygame.display.update()
 
@@ -48,7 +54,7 @@ def redrawGameWindow():
 # |-----------------------------------------------------------------------------------|
 map = src.map.Map(window_width, window_height)
 isaac = src.player.Player(window_width//2, window_height//2)
-event_handler = eventHandler.eventHandler(map, isaac, window, monitor_size, background)
+event_handler = eventHandler.eventHandler(map, isaac, window, monitor_size, background, title_menu)
 
 if debug_mode:
     isaac.damage = 10
@@ -62,13 +68,15 @@ if debug_mode:
 
 run = True
 pause = False
+main_menu = True
+
 while run:
     clock.tick(60)
-    run, pause, window, background, current_button = event_handler.eventHandling()
+    run, pause, window, background, current_button, main_menu, title_menu = event_handler.eventHandling()
     globals.window_width = window.get_width()
     globals.window_height = window.get_height()
 
-    if not pause:
+    if not pause and not main_menu:
         map.update(isaac)
         isaac.update()
             
