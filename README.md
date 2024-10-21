@@ -9,6 +9,10 @@
 * [General info](#general-info)
 * [Technologies](#technologies)
 * [Setup](#setup)
+* [Structure](#structure)
+* [Info](#info)
+* [Gallery](#gallery)
+* [Credits](#credits)
 
 ## General info
 The project is a 2D game that spawns the player on a randomly generated map, where they can explore the rooms and find various types of enemies with different behaviours and items that grant unique effects.
