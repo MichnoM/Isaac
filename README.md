@@ -93,4 +93,4 @@ To unlock cheats (teleporting, more money, better stats, enemy clearing), change
 ![boss fight](./readme/bossFight.png)
 
 ## Credits
-Thanks to the official "The Binding of Isaac: Rebirth" team for inspiring me to make this project!
+Big thanks to the official "The Binding of Isaac: Rebirth" team for inspiring me to make this project and develop as a programmer!
