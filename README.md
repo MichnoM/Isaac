@@ -15,7 +15,7 @@
 * [Credits](#credits)
 
 ## General info
-The project is a 2D game that spawns the player on a randomly generated map, where they can explore the rooms and find various types of enemies with different behaviours and items that grant unique effects.
+The project is a 2D game that throws the player into a randomly generated map, where they can explore the rooms and find various types of enemies with different behaviours and items that grant unique effects.
 The goal is to defeat the boss, that is chosen randomly from the few available. 
 
 ## Technologies
@@ -79,6 +79,8 @@ python main.py
 
 ## Info
 To unlock cheats (teleporting, more money, better stats, enemy clearing), change "debug_mode" variable in settings.py to "True" (requires launching via python main.py).
+
+*If running into performance issues, try commenting out "screen.blit(shading, parameters)" in "redrawGameWindow" in the main.py file*.
 ### Controls
 * **WASD** - Moving the character.
 * **Arrow Keys** - Shooting.
