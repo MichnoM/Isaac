@@ -56,7 +56,7 @@ python main.py
 ## Structure
 ### Game logic:
 * **main.py** - The main file, contains game logic and controls.
-* **eventHandler.py** - Manages the events, that are happening in the game.
+* **eventHandler.py** - Manages the events that are happening in the game.
 * **src/map.py** - Responsible for creating map layout, rooms, and a couple of other objects.
 * **src/player.py** - Contains all information about the player, player animations, damage taking, movement, shooting and collisions.
 * **src/enemy.py** - Manages all enemies movement, shooting, behaviour, damage taking, animations and collisions.
@@ -69,7 +69,7 @@ python main.py
 * **src/gui.py** - Creates player and boss healthbars, pickup counters, pause screen, item description animations and font outlines.
 
 ### Additional Files
-* **settings.py** - Containins the initial window width, height and debug mode toggle.
+* **settings.py** - Contains the initial window width, height and debug mode toggle.
 * **globals.py** - Stores the dynamic window size.
 * **src/spritesheet.py** - Allows to divide spritesheets into even tiles and then returns the requested tile as a ready-to-use sprite.
 * **src/items.py** - Stores the names, attributes, statistics and descriptions of all the available items in the game.
