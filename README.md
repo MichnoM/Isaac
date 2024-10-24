@@ -41,6 +41,7 @@ source venv/bin/activate
 ```
 3. Run the game
 ```bash
+cd isaac
 main.exe
 ```
 #### Alternatively
@@ -50,6 +51,7 @@ pip install pygame
 ```
 4. Run the game
 ```bash
+cd isaac
 python main.py
 ```
 
