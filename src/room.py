@@ -1,9 +1,10 @@
 import random
 from . import door
-from . import enemy
+from . import regular
+from . import boss
 from . import item as itemClass
 from .items import item_list, shop_items, pickup_list
-from .enemies import bosses, enemies
+from .enemies import bosses, regulars
 from settings import window_width, window_height
 
 class Room:
@@ -126,25 +127,29 @@ class Room:
         if len(self.enemies_list) == 0:
             if self.type == "regular":
                 for i in range(number_of_enemies):
-                    random_index = random.randint(0, len(enemies) - 1)
-                    name = enemies[random_index]
+                    random_index = random.randint(0, len(regulars) - 1)
+                    random_regular = regulars[random_index]
                     for j in range(100):
                         spawn_x = random.randint(boundaries[0].width + 100, boundaries[1].x - 100)
                         spawn_y = random.randint(boundaries[2].height + 100, boundaries[3].y - 100)
                         if spawn_x not in range(character.x - 100, character.x + 100) or spawn_y not in range(character.y - 100, character.y + 100):
                             break
 
-                    self.enemies_list.append((spawn_x, spawn_y, "regular", name))
+                    self.enemies_list.append((spawn_x, spawn_y, random_regular[0], "regular"))
 
             if self.type == "boss":
                 random_index = random.randint(0, len(bosses) - 1)
-                name = bosses[random_index]
+                random_boss = bosses[random_index]
                 spawn_x = window_width//2
                 spawn_y = window_height//2
-                self.enemies_list.append((spawn_x, spawn_y, "boss", name))
+                self.enemies_list.append((spawn_x, spawn_y, random_boss[0], "boss"))
 
         for i in self.enemies_list:
-            self.enemies.append(enemy.Enemy(i[0], i[1], i[2], i[3]))
+            if i[3] == "regular":
+                self.enemies.append(regular.Regular(i[0], i[1], i[2]))
+                
+            if i[3] == "boss":
+                self.enemies.append(boss.Boss(i[0], i[1], i[2]))
 
     def itemsSpawn(self, type, character, map, x=0, y=0, name = None):
         if name == None:

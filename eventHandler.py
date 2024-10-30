@@ -1,5 +1,5 @@
 import pygame
-from settings import window_width, window_height
+from settings import window_width, window_height, debug_mode
 import globals
 
 cooldown_event = pygame.USEREVENT + 1
@@ -18,6 +18,7 @@ class eventHandler:
         self.run = True
         self.pause = False
         self.main_menu = True
+        self.debug_mode = debug_mode
         self.window = window
         self.monitor_size = monitor_size
         self.fullscreen = False
@@ -89,6 +90,9 @@ class eventHandler:
                         globals.window_height = self.window.get_height()
                         self.background = pygame.transform.scale(self.background, (globals.window_width, globals.window_height))
                         self.menu = pygame.transform.smoothscale(self.title_menu.copy(), (globals.window_width, globals.window_height))
+
+                if event.key == pygame.K_b:
+                    self.debug_mode = not self.debug_mode
 
             if event.type == cooldown_event:
                 self.character.shooting_cooldown = False
@@ -172,4 +176,4 @@ class eventHandler:
                     pygame.time.set_timer(room_change_event, 400)
                     self.map_change_check = True
 
-        return self.run, self.pause, self.window, self.background, self.current_button, self.main_menu, self.menu
+        return self.run, self.pause, self.window, self.background, self.current_button, self.main_menu, self.menu, self.debug_mode

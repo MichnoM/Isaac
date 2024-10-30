@@ -37,6 +37,8 @@ gui = pygame.Surface((globals.window_width, globals.window_height), pygame.SRCAL
 bg = pygame.Surface((pygame.display.Info().current_w, pygame.display.Info().current_h), pygame.SRCALPHA)
 
 class Gui:
+    debug_info = font.render("DEBUG MODE: ON", 1, (255,255,255))
+
     def __init__(self):
         self.width = globals.window_width
         self.height = globals.window_height
@@ -53,7 +55,7 @@ class Gui:
         self.check2 = False
         self.frame_updated = False
 
-    def draw(self, window, character, pause, map, current_button):
+    def draw(self, window, character, pause, map, current_button, debug_mode):
         gui.set_colorkey((1,1,1))
         gui.fill((1,1,1))
         self.drawHealthbar(window, character)
@@ -101,6 +103,10 @@ class Gui:
             window.blit(bg, (0,0))
 
         window.blit(gui, (0, 0))
+
+        if debug_mode:
+            window.blit(self.debug_info, (globals.window_width - self.debug_info.get_width() - 10, 10))
+            
         self.update()
 
     def drawHealthbar(self, window, character):
@@ -222,10 +228,10 @@ class Gui:
             window.blit(sprite, (self.item_text_x, globals.window_height*0.2 - sprite.get_height()//2))
 
     def drawPickupsCount(self, window, character):
-        gui.blit(pickups, (0, 100))
-        gui.blit(self.render(f"{character.coins}", font), (60*0.75, 103))
-        gui.blit(self.render(f"{character.bombs}", font), (60*0.75, 153))
-        gui.blit(self.render(f"{character.keys}", font), (60*0.75, 203))
+        window.blit(pickups, (0, 100))
+        window.blit(self.render(f"{character.coins}", font), (60*0.75, 103))
+        window.blit(self.render(f"{character.bombs}", font), (60*0.75, 153))
+        window.blit(self.render(f"{character.keys}", font), (60*0.75, 203))
 
     def update(self):
         current_time = pygame.time.get_ticks()

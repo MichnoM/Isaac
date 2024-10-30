@@ -30,19 +30,21 @@ def redrawGameWindow():
         window.blit(background, (0, 0))
         map.draw(screen)
         screen.blit(shading, (-60, -55))
+        for room in map.rooms:
+            for pickup in room.pickups:
+                pickup.draw(screen)
         isaac.draw(screen)
         for room in map.rooms:
             for item in room.items:
                 item.draw(screen)
-            for pickup in room.pickups:
-                pickup.draw(screen)
             for enemy in room.enemies:
                 enemy.draw(screen)
             for tear in room.tears:
                 tear.draw(screen)
+
         background.fill((15,15,15))
         window.blit(screen, (map.x, map.y))
-        gui.draw(window, isaac, pause, map, current_button)
+        gui.draw(window, isaac, pause, map, current_button, debug_mode)
         # fps = gui.render(f"{round(clock.get_fps())}", font)
         # window.blit(fps, (globals.window_width - 50, 0))
     else:
@@ -72,7 +74,7 @@ main_menu = True
 
 while run:
     clock.tick(60)
-    run, pause, window, background, current_button, main_menu, title_menu = event_handler.eventHandling()
+    run, pause, window, background, current_button, main_menu, title_menu, debug_mode = event_handler.eventHandling()
     globals.window_width = window.get_width()
     globals.window_height = window.get_height()
 

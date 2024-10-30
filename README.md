@@ -80,15 +80,19 @@ python main.py
 
 
 ## Info
-To unlock cheats (teleporting, more money, better stats, enemy clearing), change "debug_mode" variable in settings.py to "True" (requires launching via python main.py).
-
 *If running into performance issues, try commenting out "screen.blit(shading, parameters)" in "redrawGameWindow" in the main.py file*.
 ### Controls
 * **WASD** - Moving the character.
 * **Arrow Keys** - Shooting.
 * **F** - Toggle fullscreen.
 * **Escape** - Pause menu.
-* **Enter/Space** - Start the game when in Main Menu.
+* **Enter/Spacebar** - Start the game when in Main Menu.
+
+##### Cheats (press **B** to unlock)
+* **Z** - Teleport to the treasure room.
+* **X** - Teleport to the boss room.
+* **C** - Teleport to the shop.
+* **Spacebar** - Remove all enemies in a room.
 
 ## Gallery
 #### Starting room
