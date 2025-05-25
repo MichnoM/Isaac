@@ -13,7 +13,7 @@ pygame.display.set_caption("The Binding of Isaac")
 
 font = pygame.sysfont.SysFont("arial", 40, True)
 
-shading = pygame.image.load("sprites/shade.png")
+shading = pygame.image.load("sprites/map/shade.png")
 shading = pygame.transform.scale(shading, (window_width*1.1, window_height*1.15)).convert_alpha()
 shading.set_alpha(240)
 
@@ -24,43 +24,15 @@ background = pygame.Surface((globals.window_width, globals.window_height), pygam
 screen = pygame.Surface((window_width, window_height), pygame.SRCALPHA)
 
 clock = pygame.time.Clock()
-                
-def redrawGameWindow():
-    if not main_menu:
-        window.blit(background, (0, 0))
-        map.draw(screen)
-        screen.blit(shading, (-60, -55))
-        for room in map.rooms:
-            for pickup in room.pickups:
-                pickup.draw(screen)
-        isaac.draw(screen)
-        for room in map.rooms:
-            for item in room.items:
-                item.draw(screen)
-            for enemy in room.enemies:
-                enemy.draw(screen)
-            for tear in room.tears:
-                tear.draw(screen)
+dt = 0
 
-        background.fill((15,15,15))
-        window.blit(screen, (map.x, map.y))
-        gui.draw(window, isaac, pause, map, current_button, debug_mode)
-        # fps = gui.render(f"{round(clock.get_fps())}", font)
-        # window.blit(fps, (globals.window_width - 50, 0))
-    else:
-        window.blit(title_menu, (0, 0))
-
-    pygame.display.update()
-
-# MAIN LOOP
-# |-----------------------------------------------------------------------------------|
 map = src.map.Map(window_width, window_height)
 isaac = src.player.Player(window_width//2, window_height//2)
 event_handler = eventHandler.eventHandler(map, isaac, window, monitor_size, background, title_menu)
 
 if debug_mode:
     isaac.damage = 10
-    isaac.speed = 15
+    isaac.speed = 10
     isaac.attack_speed = 5
     isaac.luck = 4
     isaac.coins = 50
@@ -72,14 +44,16 @@ run = True
 pause = False
 main_menu = True
 
+# MAIN LOOP
+# |-----------------------------------------------------------------------------------|
 while run:
-    clock.tick(60)
+    dt = clock.tick(60) / 1000
     run, pause, window, background, current_button, main_menu, title_menu, debug_mode = event_handler.eventHandling()
     globals.window_width = window.get_width()
     globals.window_height = window.get_height()
 
     if not pause and not main_menu:
-        map.update(isaac)
+        map.update(isaac, dt)
         isaac.update()
             
         if not map.room_change:
@@ -192,11 +166,34 @@ while run:
                             print(item)
                         for pickup in object.pickups:
                             print(pickup)
-                
-                if keys[pygame.K_b]:
-                    print(isaac.items)
-                    print(isaac.x, isaac.y)
                             
+    def redrawGameWindow():
+        if not main_menu:
+            window.blit(background, (0, 0))
+            map.draw(screen)
+            screen.blit(shading, (-60, -55))
+            for room in map.rooms:
+                for pickup in room.pickups:
+                    pickup.draw(screen)
+            isaac.draw(screen)
+            for room in map.rooms:
+                for item in room.items:
+                    item.draw(screen)
+                for enemy in room.enemies:
+                    enemy.draw(screen)
+                for tear in room.tears:
+                    tear.draw(screen)
+
+            background.fill((15,15,15))
+            window.blit(screen, (map.x, map.y))
+            gui.draw(window, isaac, pause, map, current_button, debug_mode)
+            # fps = gui.render(f"{round(clock.get_fps())}", font)
+            # window.blit(fps, (globals.window_width - 50, 0))
+        else:
+            window.blit(title_menu, (0, 0))
+
+        pygame.display.update()
+
     redrawGameWindow()
 
 pygame.quit()

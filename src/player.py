@@ -14,7 +14,7 @@ class Player:
     def __init__(self, x, y, width=32, height=32):
         self.health = 5
         self.max_health = 5
-        self.speed = 10
+        self.speed = 8
         self.attack_speed = 2
         self.damage = 4
         self.range = 5
@@ -179,28 +179,28 @@ class Player:
         if direction == "left":
             if not map.checkCollision(self, map.left_wall) or (self.door_collision and not map.current_room.enemies):
                 if not self.doorframe_collision[3]:
-                    self.x -= self.speed
+                    self.x -= self.speed * map.dt * map.dt_speed_constant
                 if map.checkCollision(self, map.left_wall) and not (self.door_collision and not map.current_room.enemies):
                     self.x = map.left_wall.x + map.left_wall.width
 
         if direction == "right":
             if not map.checkCollision(self, map.right_wall) or (self.door_collision and not map.current_room.enemies):
                 if not self.doorframe_collision[1]:
-                    self.x += self.speed
+                    self.x += self.speed * map.dt * map.dt_speed_constant
                 if map.checkCollision(self, map.right_wall) and not (self.door_collision and not map.current_room.enemies):
                     self.x = map.right_wall.x - self.width
 
         if direction == "up":
             if not map.checkCollision(self, map.upper_wall) or (self.door_collision and not map.current_room.enemies):
                 if not self.doorframe_collision[0]:
-                    self.y -= self.speed
+                    self.y -= self.speed * map.dt * map.dt_speed_constant
                 if map.checkCollision(self, map.upper_wall) and not (self.door_collision and not map.current_room.enemies):
                     self.y = map.upper_wall.y + map.upper_wall.height
 
         if direction == "down":
             if not map.checkCollision(self, map.bottom_wall) or (self.door_collision and not map.current_room.enemies):
                 if not self.doorframe_collision[2]:
-                    self.y += self.speed
+                    self.y += self.speed * map.dt * map.dt_speed_constant
                 if map.checkCollision(self, map.bottom_wall) and not (self.door_collision and not map.current_room.enemies):
                     self.y = map.bottom_wall.y - self.height
 

@@ -33,8 +33,8 @@ class Regular(enemy.Enemy):
             sprite = pygame.Surface((32*scale, 32*scale), pygame.SRCALPHA)
             body_sprite = body_walking_spritesheet.get_image(self.body_frame, 32, 32, scale=2)
             head_sprite = gaper_head_spritesheet.get_image(1, 32, 32, scale=scale)
-            sprite.blit(body_sprite, (0,body_sprite.get_height()//3))
-            sprite.blit(head_sprite, (0,-head_sprite.get_height()//8))
+            sprite.blit(body_sprite, (0,body_sprite.get_height()//3 - 1))
+            sprite.blit(head_sprite, (0,-head_sprite.get_height()//8 + 1))
 
         if self.name == "horf":
             scale = 2.5
@@ -49,7 +49,6 @@ class Regular(enemy.Enemy):
         if self.name == "gaper":
             self.speed_x = 3
             self.speed_y = 3
-            x_block, y_block = self.boundaryBlock(map.walls)
             delta_x = (map.player_info[0] + map.player_info[2]//2) - (self.x + self.width//2)
             delta_y = (map.player_info[1] + map.player_info[3]//2) - (self.y + self.height//2)
 
@@ -62,8 +61,8 @@ class Regular(enemy.Enemy):
                 self.direction_x = 0
                 self.direction_y = 0
 
-            self.x += self.speed_x * self.direction_x
-            self.y += self.speed_y * self.direction_y
+            self.x += self.speed_x * self.direction_x * map.dt * map.dt_speed_constant
+            self.y += self.speed_y * self.direction_y * map.dt * map.dt_speed_constant
 
         if self.name == "horf":
             if not self.shooting:

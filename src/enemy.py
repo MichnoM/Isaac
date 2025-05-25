@@ -70,7 +70,10 @@ class Enemy:
         if self.hurt:
             self.hurtSpriteOverlay(self.sprite)
         
-        window.blit(self.sprite, (self.x + self.width//2 - self.sprite.get_width()//2, self.y + self.height//2 - self.sprite.get_height()//2))
+        if self.name=="horf":
+            window.blit(self.sprite, (self.x + self.width//2 - self.sprite.get_width()//2, self.y + self.height//4 - self.sprite.get_height()//2))
+        else:
+            window.blit(self.sprite, (self.x + self.width//2 - self.sprite.get_width()//2, self.y + self.height//2 - self.sprite.get_height()//2))
         
         # pygame.draw.rect(window, (255, 0, 0), (self.x, self.y, self.width, self.height), 1)
 
@@ -169,22 +172,22 @@ class Enemy:
     def enemyCollision(self, map, character):
         for enemy in map.current_room.enemies:
             if map.checkCollision(self.bottom_side, enemy.top_side):
-                self.y -= self.speed_x
+                self.y -= self.speed_x * map.dt * map.dt_speed_constant
             if map.checkCollision(self.top_side, enemy.bottom_side):
-                self.y += self.speed_x
+                self.y += self.speed_x * map.dt * map.dt_speed_constant
             if map.checkCollision(self.left_side, enemy.right_side):
-                self.x += self.speed_y
+                self.x += self.speed_y * map.dt * map.dt_speed_constant
             if map.checkCollision(self.right_side, enemy.left_side):
-                self.x -= self.speed_y
+                self.x -= self.speed_y * map.dt * map.dt_speed_constant
 
         if map.checkCollision(self.bottom_side, character.top_side):
-                self.y -= self.speed_x
+                self.y -= self.speed_x * map.dt * map.dt_speed_constant
         if map.checkCollision(self.top_side, character.bottom_side):
-            self.y += self.speed_x
+            self.y += self.speed_x * map.dt * map.dt_speed_constant
         if map.checkCollision(self.left_side, character.right_side):
-            self.x += self.speed_y
+            self.x += self.speed_y * map.dt * map.dt_speed_constant
         if map.checkCollision(self.right_side, character.left_side):
-            self.x -= self.speed_y
+            self.x -= self.speed_y * map.dt * map.dt_speed_constant
 
     def hurtSpriteOverlay(self, sprite):
         colour_image = pygame.Surface(sprite.get_size()).convert_alpha()

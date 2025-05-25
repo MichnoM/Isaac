@@ -1,8 +1,8 @@
 bosses = ["the haunt", "fistula"]
 enemies = ["horf", "gaper"]
 
-gaper = "gaper", ["width", "height"], [32, 32]
-horf = "horf", ["width", "height"], [32*1.5, 32*1.5]
+gaper = "gaper", ["width", "height"], [48, 48]
+horf = "horf", ["width", "height"], [48, 48]
 
 regulars = [horf, gaper]
 

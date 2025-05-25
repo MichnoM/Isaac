@@ -6,8 +6,8 @@ from . import projectile
 from settings import window_width, window_height
 import globals
 
-background = pygame.image.load('sprites/background.png')
-starting_room_controls_image = pygame.image.load('sprites/startingRoomControls.png')
+background = pygame.image.load('sprites/map/background.png')
+starting_room_controls_image = pygame.image.load('sprites/map/startingRoomControls.png')
 
 starting_room_controls_image = pygame.transform.scale(starting_room_controls_image, (starting_room_controls_image.get_width()*3, starting_room_controls_image.get_height()*3))
 
@@ -28,6 +28,8 @@ class Map:
         self.room_change = False
         self.cooldown = 0
         self.spawned_items = []
+        self.dt = 0
+        self.dt_speed_constant = 50
 
         self.mapLayout()
         self.roomCreation()
@@ -69,7 +71,8 @@ class Map:
                 for door in room.doors:
                     door.draw(window)
 
-    def update(self, character):
+    def update(self, character, dt):
+        self.dt = dt
         self.width = window_width
         self.height = window_height
         self.left_wall = pygame.Rect(0, 0, self.wall_thickness, self.height)
@@ -109,7 +112,8 @@ class Map:
                     row = random.randint(1, 8)
                     column = random.randint(1, 8)
                     if self.layout[row][column] == 0:
-                        if self.layout[row-1][column] == 1 or self.layout[row+1][column] == 1 or self.layout[row][column-1] == 1 or self.layout[row][column+1] == 1:
+                        if (self.layout[row-1][column] == 1 or self.layout[row+1][column] == 1 or 
+                            self.layout[row][column-1] == 1 or self.layout[row][column+1] == 1):
                             self.layout[row][column] = 1
                             break
         for j in range(3):

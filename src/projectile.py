@@ -1,7 +1,7 @@
 import pygame
 from . import spritesheet
 
-tears_sprites = pygame.image.load('sprites/tears.png')
+tears_sprites = pygame.image.load('sprites/projectiles/tears.png')
 
 tear_spritesheet = spritesheet.SpriteSheet(tears_sprites)
 
@@ -46,7 +46,7 @@ class Projectile:
             self.updated = True
         
         if not self.animation:
-            self.move(self.character.range)
+            self.move(self.character.range, map.dt, map.dt_speed_constant)
         
         if map.checkCollision(self, map.walls):
             self.pop = True
@@ -72,22 +72,22 @@ class Projectile:
                 self.pop = True
                 character.hit()
                 
-    def move(self, projectile_range):
+    def move(self, projectile_range, dt, speed_constant):
         if self.distance_travelled < projectile_range*50:
-            self.x += self.speed * self.direction[0]
-            self.y += self.speed * self.direction[1]
-            self.distance_travelled += self.speed
+            self.x += self.speed * self.direction[0] * dt * speed_constant
+            self.y += self.speed * self.direction[1] * dt * speed_constant
+            self.distance_travelled += self.speed * dt * speed_constant
         else:
             if self.check < 5:
                 if self.direction[1] < 0:
-                    self.y -= self.speed
+                    self.y -= self.speed * dt * speed_constant
                 elif self.direction[1] > 0:
-                    self.y += self.speed
+                    self.y += self.speed * dt * speed_constant
                 elif self.direction[0] < 0:
-                    self.x -= self.speed
+                    self.x -= self.speed * dt * speed_constant
                     self.y += 2*self.check
                 elif self.direction[0] > 0:
-                    self.x += self.speed
+                    self.x += self.speed * dt * speed_constant
                     self.y += 2*self.check
                 self.check += 1
             else:

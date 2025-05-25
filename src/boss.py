@@ -71,8 +71,8 @@ class Boss(enemy.Enemy):
                 if random_int == 2:
                     self.direction_y *= -1
 
-                self.x += self.speed_x * self.direction_x
-                self.y += self.speed_y * self.direction_y
+                self.x += self.speed_x * self.direction_x * map.dt * map.dt_speed_constant
+                self.y += self.speed_y * self.direction_y * map.dt * map.dt_speed_constant
 
             else:
                 x_block, y_block = self.boundaryBlock(map.walls, mode="x")
@@ -84,20 +84,20 @@ class Boss(enemy.Enemy):
                     if x_block:
                         self.direction_x *= -1
 
-                    self.x += self.speed_x * self.direction_x
+                    self.x += self.speed_x * self.direction_x * map.dt * map.dt_speed_constant
 
         if self.name == "fistula":
             x_block, y_block = self.boundaryBlock(map.walls)
             if x_block == True:
                 self.direction_x *= -1
-                self.speed_x = random.randint(1, 4)
+                self.speed_x = random.randint(2, 4)
 
             if y_block == True:
                 self.direction_y *= -1
-                self.speed_y = random.randint(1, 4)
+                self.speed_y = random.randint(2, 4)
 
-            self.x += self.speed_x * self.direction_x
-            self.y += self.speed_y * self.direction_y
+            self.x += self.speed_x * self.direction_x * map.dt * map.dt_speed_constant
+            self.y += self.speed_y * self.direction_y * map.dt * map.dt_speed_constant
 
     def enemyBehaviour(self, current_time, map):
         if self.name == "the haunt":
