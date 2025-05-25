@@ -24,10 +24,17 @@ The goal is to defeat the boss, that is chosen randomly from the few available.
 * Pygame 2.6.1
 
 ## Setup
+#### Fast (outdated, .exe file is too big to upload with the increasing project complexity)
 1. Clone the repository
 ```
 git clone https://github.com/michnom/isaac.git
 ```
+2. Run the game
+```bash
+cd isaac
+main.exe
+```
+#### Recommended
 2. Set up virtual environment (optional)
 ```bash
 # Create a virtual environment
@@ -39,12 +46,6 @@ venv\Scripts\activate
 # Activate the virtual environment (Linux/macOS)
 source venv/bin/activate
 ```
-3. Run the game
-```bash
-cd isaac
-main.exe
-```
-#### Alternatively
 3. Install dependencies (only Pygame)
 ```bash
 pip install pygame
